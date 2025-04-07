@@ -1,5 +1,5 @@
 # Mommybrain_slide_seq
-Spatial Transcriptomics (Slide_seq V2, Slide-Tags) project on Postopartum Depression (PPD). Brains of female rats were sequenced at different stages (nulliparous, pregnant, postpartum), while some animals were treated with corticosterone to mimic the psychiatric symptoms of PPD.  
+Spatial Transcriptomics (Slide-seq V2, Slide-Tags) project on Postopartum Depression (PPD). Brains of female rats were sequenced at different stages (nulliparous, pregnant, postpartum), while some animals were treated with corticosterone to mimic the psychiatric symptoms of PPD.  
 
 ## Explanation of Methods 
 ![image](https://github.com/user-attachments/assets/be8514d0-ad38-4e93-8ab4-0b7a19070295)
