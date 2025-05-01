@@ -118,27 +118,3 @@ for sample in sample_list:
 
     # Save to file if needed
     adata.write_h5ad(os.path.join(output_path, f"{sample}", f"converted_ann_data_{sample}.h5ad"))
-
-
-
-# #TESTING to preview one sample's gene names \
-
-# h5_file = os.path.join(data_dir, "BC13", "output_file_filtered.h5")
-
-# # Function to preview file - to identify which specific datasets you wish to have in your anndata obj
-# def print_structure(name, obj):
-#     if isinstance(obj, h5py.Dataset):
-#         print(f"{name}: dataset, shape = {obj.shape}, dtype = {obj.dtype}")
-#     elif isinstance(obj, h5py.Group):
-#         print(f"{name}: group")
-
-# # Preview structure 
-# with h5py.File(h5_file, "r") as f:
-#     f.visititems(print_structure)
-
-# with h5py.File(h5_file, "r") as f:
-#     print("Keys under metadata:", list(f["metadata"].keys()))
-#     # Load and preview gene names
-#     gene_names = f["metadata/gene_names"][:].astype(str)
-#     print(f"Total gene names: {len(gene_names)}")
-#     print("First 20 gene names:", gene_names[:20])
