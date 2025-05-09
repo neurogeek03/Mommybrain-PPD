@@ -1,4 +1,4 @@
-# Mommybrain: A computational genomics study of the brain under post-partum stress
+# Mommybrain: Computational genomics on the brain post-partum
 Spatial Transcriptomics (Slide-seq V2, Slide-Tags) project on Postopartum Depression (PPD). Brains of female rats were sequenced at different stages (nulliparous, pregnant, postpartum), while some animals were treated with corticosterone to mimic the psychiatric symptoms of PPD.  
 
 ## Explanation of Methods 
