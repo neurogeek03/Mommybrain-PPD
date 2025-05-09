@@ -1,38 +1,58 @@
 # =====================================================================
-# Title:        Convert to H5Seurat
-# Description:  Using a .rds file as input, a .h5seurat file is created.
+# Title:        Run scDblFinder on H5AD Files and Export Doublet Labels
+# Description:  Iterates over h5ad files, runs scDblFinder, and saves
+#               doublet classifications and scores to CSV.
 # Author:       Maria Eleni Fafouti
 # Date:         2025-04-25
 # =====================================================================
 
-# bash
+# ---- SETUP ----
+
+# Ensure you have activated the correct conda environment before running:
 # conda activate scdbl_env
 
-# ---- 1. SETUP ----
+suppressPackageStartupMessages({
+  library(SingleCellExperiment)
+  library(scDblFinder)
+  library(BiocParallel)
+  library(zellkonverter)
+  library(dplyr)
+  library(readr)
+})
 
-# Library Loading
-library(SingleCellExperiment)
-library(scDblFinder)
-library(BiocParallel)
+sample_list <- c("BC28", "BC3", "BC9", "BC15", "BC14", "BC13")
 
-# Define input and output file paths
-project_path <- "/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_tags"
-in_path <- file.path(project_path, 'Integration', 'Integration_CB_out') 
-doublet_folder <- file.path(project_path, 'Doublet_detection')
+# ---- DEFINE PATHS ----
+project_path <- "/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_tags/Doublet_detection/scanpy"
+in_path <- file.path(project_path, "tmp_dir")
 
-# ---- 2. DATA LOADING ----
-# Loading the SingleCellExperiment obj
-sce <- readRDS(file.path(doublet_folder, 'sce_object.rds'))
+# ---- PROCESS EACH SAMPLE ----
+for (sample in sample_list) {
+  message(paste("Processing sample:", sample))
 
-# Preview 
-sce
+  sample_file <- paste0(sample, "_tmp.h5ad")
+  out_csv_name <- paste0(sample, "_scdblfinder.csv")
+  in_file <- file.path(in_path, sample_file)
+  csv_file <- file.path(in_path, out_csv_name)
 
-# ---- 3. RUNNING SCDBL FINDER ----
-sce <- scDblFinder(sce, samples="orig.ident", BPPARAM = SerialParam())
+  # ---- LOAD DATA ----
+  sce <- readH5AD(in_file)
 
-# Verifying 
-table(sce$scDblFinder.class)
+  if (!"counts" %in% assayNames(sce)) {
+    assay(sce, "counts") <- assay(sce, "X")
+    assays(sce) <- assays(sce)["counts"]
+  }
 
-# ---- 4. SAVING DATA AS SINGLE CELL EXPERIMENT OBJECT ----
-saveRDS(sce, file.path(doublet_folder, "scdblfinder_result1.rds"))
+  # ---- RUN SCDBLFINDER ----
+  sce <- scDblFinder(sce, BPPARAM = SerialParam())
+
+  # ---- SAVE RESULTS TO CSV ----
+  label_df <- data.frame(
+    barcode = colnames(sce),
+    scDblFinder.class = sce$scDblFinder.class,
+    scDblFinder.score = sce$scDblFinder.score
+  )
+
+  write_csv(label_df, csv_file)
+}
 
