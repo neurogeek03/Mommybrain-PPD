@@ -4,6 +4,10 @@ Description:  Umap & barplots (at classs & subclass level)
 Author:   Maria Eleni Fafouti 
 Date: 12-05-2025
 """
+# bash
+# conda activate seurat_env
+
+# ========== IMPORTS ==========
 import scanpy as sc
 import seaborn as sns
 import matplotlib.pyplot as plt
