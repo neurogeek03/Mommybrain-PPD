@@ -6,4 +6,13 @@ Spatial Transcriptomics (Slide-seq V2, Slide-Tags) project on Postpartum Depress
 
 **Slide-seq**: a spatial bead can capture 1 or more cells, collecting information from both the cytoplasm and the nucleus
 
-**Slide-tags**: a spatial bead can capture 1 cell only, collecting information from its nucleus 
+**Slide-tags**: a spatial bead can capture 1 cell only, collecting information from its nucleus
+
+## Containers used: 
+### Seurat v5 container
+An easy way to access many Seurat-related packages. Additional packages can be added by mounting a conda env to the container. 
+To obtain the Docker image, I run the following on my HPC (which uses Apptainer):
+```bash
+module load apptainer
+apptainer pull seurat_v5.sif docker://satijalab/seurat:5.0.0
+```
