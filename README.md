@@ -16,3 +16,8 @@ To obtain the Docker image, I run the following on my HPC (which uses Apptainer)
 module load apptainer
 apptainer pull seurat_v5.sif docker://satijalab/seurat:5.0.0
 ```
+### EdgeR container 
+```bash
+module load apptainer
+apptainer pull edger.sif docker://chrisamiller/edger:4.4.2
+```
