@@ -15,25 +15,30 @@ import anndata as ad
 import pandas as pd
 import numpy as np
 
+print('libraries loaded!')
+
 # ========== PATHS ==========
 project_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD'
-data_folder = os.path.join(project_dir, 'genes_mouse_rename/adata_with_mouse_orthologs')
-rctd_out_folder = os.path.join(project_dir, 'new_RCTD_run/out_RCTD_all/mouse_RCTD_out_merged')
-output_dir = os.path.join(project_dir,'new_RCTD_run', 'anndata_objects')
+data_folder = os.path.join(project_dir, 'genes_mouse_rename/slide_seq_full_adata_with_mouse_orthologs')
+rctd_out_folder = os.path.join(project_dir, 'new_RCTD_run/out_RCTD_all/mouse_RCTD_out_merged_delta_1')
+output_dir = os.path.join(project_dir,'new_RCTD_run', 'anndata_objects_mouse_d1')
 os.makedirs(output_dir, exist_ok=True)
 
 # ========== FIND SAMPLES ==========
 # Identify all folders like B01_3TB, B08_3TB
 # samples = [d.replace('_3TB', '') for d in os.listdir(data_folder) if d.endswith('_3TB')]
-samples = ['B03']
+# samples = ['B03']
+
+samples = [fname.split('.')[0] for fname in os.listdir(data_folder)]
+print(samples)
 
 # ========== LOOP THROUGH SAMPLES ==========
 for sample in samples:
     print(f"🔄 Processing sample: {sample}")
 
     h5ad_path = os.path.join(data_folder, f"{sample}.h5ad")
-    rctd_out_path = os.path.join(rctd_out_folder, f"delta_1_class_{sample}_merged_RCTD.csv")
-    output_path = os.path.join(output_dir, f"delta_1_class_{sample}_with_RCTD_mouse.h5ad")
+    rctd_out_path = os.path.join(rctd_out_folder, f"delta_1_subclass_{sample}_merged_RCTD.csv")
+    output_path = os.path.join(output_dir, f"delta_1_subclass_{sample}_with_RCTD_mouse.h5ad")
 
     if not os.path.exists(h5ad_path):
         print(f"❌ h5ad not found for {sample}")

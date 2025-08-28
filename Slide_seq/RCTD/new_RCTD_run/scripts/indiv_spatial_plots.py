@@ -13,7 +13,7 @@ os.makedirs(output_dir, exist_ok=True)
 
 # GET COLORS
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
-color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
+#color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
 
 # Create mapping from label number (prefix before _) to hex color
 def get_num_prefix(label):
@@ -34,16 +34,16 @@ label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 
 # ========== GET FILES ==========
 # h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith("_with_RCTD.h5ad")])
-h5ad_files = ["B03_with_RCTD.h5ad"]
+h5ad_files = ["B03_tags_singlets_mapmycells.h5ad"]
 spot_class_column = "RCTD_spot_class"
-type_column = "RCTD_second_type"
+type_column = "mapmycells_class_name"
 print(f"Found {len(h5ad_files)} h5ad files")
 
 for h5ad_file in h5ad_files:
     sample = h5ad_file.split("_")[0]
     print(f"📂 Reading: {sample}")
 
-    adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Spatial/anndata_objects_rctd_slidetag_ref"
+    adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects"
     adata = sc.read_h5ad(os.path.join(adata_dir, h5ad_file))
 
     if spot_class_column not in adata.obs.columns:
@@ -55,6 +55,9 @@ for h5ad_file in h5ad_files:
         print(f"⚠️ Skipping {sample}: no singlet spots")
         continue
 
+    # Remove cells where mapmycells_subclass_name is '01 IT-ET Glut'
+    singlets = singlets[singlets.obs[type_column] != '01 IT-ET Glut']
+
     if type_column not in singlets.obs.columns or "X_spatial" not in singlets.obsm:
         print(f"⚠️ Skipping {sample}: missing data")
         continue
@@ -62,6 +65,7 @@ for h5ad_file in h5ad_files:
     coords = singlets.obsm["X_spatial"]
     df = pd.DataFrame(coords, columns=["x", "y"], index=singlets.obs_names)
     second_type_df = singlets.obs[[type_column]].copy()
+    
     merged_df = df.join(second_type_df, how='left')
 
     # Count cell types and identify top 30
@@ -151,7 +155,7 @@ for h5ad_file in h5ad_files:
     )
 
     plt.tight_layout()
-    output_png = os.path.join(output_dir, f"class_tags_ref_{sample}_spatial_RCTD.png")
+    output_png = os.path.join(output_dir, f"no_class_01_{type_column}_tags_ref_{sample}_spatial_RCTD.png")
     plt.savefig(output_png, dpi=300)
     plt.close()
     print(f"✅ Saved individual plot (top 30 + Other) to {output_png}")
