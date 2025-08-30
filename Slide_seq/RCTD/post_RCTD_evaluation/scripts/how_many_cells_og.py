@@ -2,7 +2,7 @@
 Title: Plot number of cells per metadata meta
 Description:  Parsimonious script that requires 2 arguments: 1) the adata file 2) the metadata meta
 Author:   Maria Eleni Fafouti 
-Date: 23-06-2025
+Date: 28-08-2025
 """
 import argparse
 import matplotlib.pyplot as plt
@@ -11,27 +11,48 @@ import os
 
 def main():
     # ---- Parse arguments ----
-    parser = argparse.ArgumentParser(description="Plot cell counts per metadata category from an AnnData object")
+    parser = argparse.ArgumentParser(description="Plot cell counts per two metadata categories from an AnnData object")
     parser.add_argument("--file", "-f", required=True, help="Path to the .h5ad file")
-    parser.add_argument("--meta", "-m", required=True, help="Metadata meta in .obs to count")
-    parser.add_argument("--out", "-o", required=True, help="Output dir")
+    parser.add_argument("--meta1", "-m1", required=True, help="First metadata column in .obs")
+    parser.add_argument("--meta2", "-m2", required=True, help="Second metadata column in .obs")
+    parser.add_argument("--out", "-o", required=True, help="Output directory")
     args = parser.parse_args()
 
     # ---- Load data ----
     adata = sc.read_h5ad(args.file)
-
     adata.obs_names_make_unique()
 
-    celltype_col = "RCTD_first_type_mouse"  # metadata column
-    sample_col = "sample"                   # adjust if needed
-
-    # --- Count cells per sample and celltype ---
+    # --- Count cells per combination of meta1 & meta2 ---
     counts = (
         adata.obs
-        .groupby([sample_col, celltype_col])
+        .groupby([args.meta1, args.meta2])
         .size()
         .reset_index(name="count")
     )
+
+    # ---- Plot ----
+    plt.figure(figsize=(10, 6))
+    pivot = counts.pivot(index=args.meta1, columns=args.meta2, values="count").fillna(0)
+    pivot.plot(kind="bar", stacked=True, figsize=(10, 6))
+    plt.xlabel(args.meta1)
+    plt.ylabel("Number of cells")
+    plt.title(f"Cell counts by {args.meta1} and {args.meta2}")
+    plt.legend(title=args.meta2, bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    # ---- Save plot ----
+    os.makedirs(args.out, exist_ok=True)
+    outfile = os.path.join(args.out, f"{args.meta1}_{args.meta2}_counts.png")
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Plot saved to {outfile}")
+
+    # ---- Save counts to CSV ----
+    csv_file = os.path.join(args.out, f"{args.meta1}_{args.meta2}_counts.csv")
+    counts.to_csv(csv_file, index=False)
+    print(f"Counts saved to {csv_file}")
+
+if __name__ == "__main__":
+    main()
 
     # # --- Find celltypes that have >=50 cells in ALL samples ---
     # valid_cts = (
@@ -47,31 +68,3 @@ def main():
 
     # # --- Subset the AnnData object ---
     # adata = adata[adata.obs[celltype_col].isin(valid_cts)].copy()
-
-    # ---- Count cells ----
-    counts = adata.obs[args.meta].value_counts()
-
-    # ---- Plot ----
-    plt.figure(figsize=(6, 8))
-    counts.plot(kind="barh")   # <-- horizontal bar plot instead of bar
-    plt.xlabel("Number of cells")
-    plt.ylabel(args.meta)    # or your metadata column name
-    plt.title(f"Cell counts per {args.meta}")
-
-    # ---- Save ----
-    outfile = f"{args.meta}_counts.png"
-    plt.tight_layout()
-    plt.savefig(outfile, dpi=300)
-    print(f"Plot saved to {args.out}")
-
-    # ---- Count cells for the requested metadata ----
-    counts_meta = adata.obs[args.meta].value_counts().reset_index()
-    counts_meta.columns = [args.meta, "count"]
-
-    # ---- Save counts to CSV ----
-    csv_file = os.path.join(args.out, f"{args.meta}_counts.csv")
-    counts_meta.to_csv(csv_file, index=False)
-    print(f"Counts saved to {csv_file}")
-
-if __name__ == "__main__":
-    main()
