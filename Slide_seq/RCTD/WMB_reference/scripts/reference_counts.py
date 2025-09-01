@@ -46,7 +46,7 @@ def count_cells_by_subclass():
     counts_df = subclass_counts.reset_index()
     counts_df.columns = ['subclass', 'cell_count']
 
-    output_csv_path = os.path.join(in_dir, 'ISO_subclass_counts_stratified_subsampled.csv')
+    output_csv_path = os.path.join(in_dir, 'smaller_ref_subclass_counts_stratified_subsampled.csv')
     try:
         counts_df.to_csv(output_csv_path, index=False)
         print(f"✅ Successfully saved counts to: {output_csv_path}")

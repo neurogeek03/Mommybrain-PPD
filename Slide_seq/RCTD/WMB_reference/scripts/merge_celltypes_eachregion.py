@@ -12,7 +12,7 @@ os.makedirs(out_dir, exist_ok=True)
 metadata_csv = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference/subset_cellids_celltypes_metadata_20241115.csv'
 min_genes = 200
 min_counts = 500
-target_cells_per_region = 50000
+target_cells_per_region = 30000
 min_cells_per_type = 25
 adata_list = []
 
@@ -147,6 +147,6 @@ else:
     print(f"⚠️  Warning: Could not create summary CSV because required columns ('{cell_type_column}', 'region') were not found.")
 
 # ========== SAVE ==========
-output_filepath = os.path.join(out_dir, "celltypes_WMB_high_qual_cells_all_regions_max50k.h5ad")
+output_filepath = os.path.join(out_dir, "SMALLER_ref_ABC_coronal_max50k_min25.h5ad")
 adata_all.write_h5ad(output_filepath)
 print(f"✅ Saved to: {output_filepath}")
