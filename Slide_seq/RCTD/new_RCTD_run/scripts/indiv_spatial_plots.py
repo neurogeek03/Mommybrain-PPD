@@ -13,7 +13,7 @@ os.makedirs(output_dir, exist_ok=True)
 
 # GET COLORS
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
-#color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
+color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
 
 # Create mapping from label number (prefix before _) to hex color
 def get_num_prefix(label):
@@ -34,9 +34,9 @@ label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 
 # ========== GET FILES ==========
 # h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith("_with_RCTD.h5ad")])
-h5ad_files = ["B03_tags_singlets_mapmycells.h5ad"]
-spot_class_column = "RCTD_spot_class"
-type_column = "mapmycells_class_name"
+h5ad_files = ["delta_5_umi30_subclass_B03_with_RCTD_mouse.h5ad"]
+spot_class_column = "RCTD_spot_class_mouse"
+type_column = "RCTD_first_type_mouse"
 print(f"Found {len(h5ad_files)} h5ad files")
 
 for h5ad_file in h5ad_files:
@@ -155,7 +155,7 @@ for h5ad_file in h5ad_files:
     )
 
     plt.tight_layout()
-    output_png = os.path.join(output_dir, f"no_class_01_{type_column}_tags_ref_{sample}_spatial_RCTD.png")
+    output_png = os.path.join(output_dir, f"d5_umi30_{type_column}_mouse_coronal_ref_{sample}_spatial_RCTD.png")
     plt.savefig(output_png, dpi=300)
     plt.close()
     print(f"✅ Saved individual plot (top 30 + Other) to {output_png}")

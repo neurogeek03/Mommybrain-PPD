@@ -6,14 +6,14 @@ import os
 parent_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/out_RCTD_all'
 
 samples = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
-output_dir = os.path.join(parent_dir, 'mouse_RCTD_out_merged_delta_1')
+output_dir = os.path.join(parent_dir, 'umi30_delta_5_RCTD_out_merged')
 os.makedirs(output_dir, exist_ok=True)
 
 for sample in samples:
     print(f"Processing sample: {sample}...")
 
     # Define output path
-    output_path = os.path.join(output_dir, f"delta_1_subclass_{sample}_merged_RCTD.csv")
+    output_path = os.path.join(output_dir, f"delta_5_umi30_{sample}_merged_RCTD.csv")
 
     # Skip if already exists
     if os.path.exists(output_path):
