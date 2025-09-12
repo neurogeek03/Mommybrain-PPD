@@ -5,14 +5,14 @@ import os
 import anndata
 
 # ========== PATHS ==========
-in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference/data'
-out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference_coronal'
+in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/ABC_regions_mouse_with_rat_genes_h5ads'
+out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference_coronal/out'
 os.makedirs(out_dir, exist_ok=True)
 
 metadata_csv = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference/subset_cellids_celltypes_metadata_20241115.csv'
 min_genes = 200
 min_counts = 500
-target_cells_per_region = 30000
+target_cells_per_region = 100000
 min_cells_per_type = 25
 adata_list = []
 

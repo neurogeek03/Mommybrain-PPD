@@ -5,10 +5,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
 import distinctipy 
+import argparse
+
+# ========== ARGS ==========
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input_dir", help="Path to input annotated anndata objects w/ RCTD output")
+parser.add_argument("-o", "--output_dir", help="Path to output folder for the figures", default=None)
+args = parser.parse_args()
 
 # ========== PATHS ==========
-adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects"
-output_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/spatial_plots_RCTD_mouse"
+# adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/ratified_ref_anndata_objects"
+adata_dir = args.input_dir
+#output_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/spatial_plots_RCT_ratified_ref"
+output_dir = args.output_dir
 os.makedirs(output_dir, exist_ok=True)
 
 # GET COLORS
@@ -31,23 +40,23 @@ color_df = color_df.sort_values("num_prefix")
 label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 
 #print(label_to_hex)
-
+print(adata_dir)
 # ========== GET FILES ==========
-# h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith("_with_RCTD.h5ad")])
-h5ad_files = ["delta_5_umi30_subclass_B03_with_RCTD_mouse.h5ad"]
-spot_class_column = "RCTD_spot_class_mouse"
-type_column = "RCTD_first_type_mouse"
+h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith("_with_RCTD_mouse.h5ad")])
+# h5ad_files = ["B37_with_RCTD_mouse.h5ad"]
+spot_class_column = "RCTD_spot_class_rat"
+type_column = "RCTD_first_type_rat"
 print(f"Found {len(h5ad_files)} h5ad files")
 
 for h5ad_file in h5ad_files:
     sample = h5ad_file.split("_")[0]
     print(f"📂 Reading: {sample}")
 
-    adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects"
+    # adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/ratified_ref_anndata_objects"
     adata = sc.read_h5ad(os.path.join(adata_dir, h5ad_file))
 
     if spot_class_column not in adata.obs.columns:
-        print(f"⚠️ Skipping {sample}: no RCTD_spot_class_mouse")
+        print(f"⚠️ Skipping {sample}: no RCTD_spot_class_rat")
         continue
 
     singlets = adata[adata.obs[spot_class_column] == "singlet"].copy()
@@ -72,7 +81,7 @@ for h5ad_file in h5ad_files:
     top30_celltypes = (
         merged_df[type_column]
         .value_counts()
-        .nlargest(30)
+        .nlargest(40)
         .index
     )
 
@@ -155,7 +164,7 @@ for h5ad_file in h5ad_files:
     )
 
     plt.tight_layout()
-    output_png = os.path.join(output_dir, f"d5_umi30_{type_column}_mouse_coronal_ref_{sample}_spatial_RCTD.png")
+    output_png = os.path.join(output_dir, f"{type_column}_ratified_coronal_ref_{sample}_spatial_RCTD.png")
     plt.savefig(output_png, dpi=300)
     plt.close()
     print(f"✅ Saved individual plot (top 30 + Other) to {output_png}")

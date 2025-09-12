@@ -7,7 +7,6 @@ Date: 23-06-2025
 # bash
 
 # ========== IMPORTS ==========
-from pickle import TRUE
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -129,7 +128,7 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
                left=df_summary["downregulated"],
                label="Upregulated (CORT > OIL)", color='red')
         ax.set_xlabel("Number of significant genes")
-        ax.legend(handles=[bar1, bar2])
+        #ax.legend(handles=[bar1, bar2])
     else:
         x = np.arange(len(df_summary))
         width = 0.35
@@ -138,16 +137,15 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
         ax.set_xticks(x)
         ax.set_xticklabels(df_summary["subclass"], rotation=90, fontsize=8)
         ax.set_ylabel("Number of significant genes")
-        ax.legend()
+        #ax.legend()
 
     ax.set_title(f"DE genes per subclass (|log2FC| > {logfc_thresh}, FDR < {fdr_thresh})", fontsize=12)
     plt.tight_layout()
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     plt.savefig(output_path, dpi=300)
-    plt.show()
 
-def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, fdr_thresh=0.1, top_n=5):
+def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, fdr_thresh=0.1, top_n=10):
     """
     Creates and saves individual volcano plots for each DE result file, labeling top N genes by FDR.
 
@@ -162,7 +160,7 @@ def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, f
 
     file_paths = [os.path.join(input_dir, f)
                   for f in os.listdir(input_dir)
-                  if f.endswith("_dge_results.tsv")]
+                  if f.endswith("_edgeR_results.tsv")]
 
     for filepath in sorted(file_paths):
         try:
@@ -245,84 +243,107 @@ def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, f
 #     horizontal=True         # better for long labels
 # )
 
-def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, fdr_thresh=0.1, top_n=0):
-    """
-    Creates and saves individual volcano plots for each DE result file, labeling subclass-specific genes only.
+# def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, fdr_thresh=0.1, top_n=0):
+#     """
+#     Creates and saves individual volcano plots for each DE result file, labeling subclass-specific genes only.
 
-    Parameters:
-    - input_dir: str, directory containing *_dge_results.tsv files
-    - output_dir: str, directory where individual plots will be saved
-    - logfc_thresh: float, log2 fold change threshold for significance
-    - fdr_thresh: float, FDR threshold for significance
-    - top_n: int, ignored (labels are defined by subclass)
-    """
+#     Parameters:
+#     - input_dir: str, directory containing *_dge_results.tsv files
+#     - output_dir: str, directory where individual plots will be saved
+#     - logfc_thresh: float, log2 fold change threshold for significance
+#     - fdr_thresh: float, FDR threshold for significance
+#     - top_n: int, ignored (labels are defined by subclass)
+#     """
 
-    # Gene labels for specific subclasses
-    subclass_genes = {
-    "327_Oligo_NN": ["Fkbp5", "Sgk1", "Ddit4", "Pdk4", "Btg2"],
-    "007_L2_3_IT_CTX_Glut": ["Fkbp5", "Btg2", "Zfp189", "Tgfb2", "Wipf3"],
-    "061_STR_D1_Gaba": ["Camk1g", "Actg1", "Kcnh7", "Arhgap26"]
-    }
+#     # Gene labels for specific subclasses
+#     subclass_genes = {
+#     "327_Oligo_NN": ["Fkbp5", "Sgk1", "Ddit4", "Pdk4", "Btg2"],
+#     "007_L2_3_IT_CTX_Glut": ["Fkbp5", "Btg2", "Zfp189", "Tgfb2", "Wipf3"],
+#     "061_STR_D1_Gaba": ["Camk1g", "Actg1", "Kcnh7", "Arhgap26"]
+#     }
 
 
-    os.makedirs(output_dir, exist_ok=True)
+#     os.makedirs(output_dir, exist_ok=True)
 
-    file_paths = [os.path.join(input_dir, f)
-                  for f in os.listdir(input_dir)
-                  if f.endswith("_dge_results.tsv")]
+#     file_paths = [os.path.join(input_dir, f)
+#                   for f in os.listdir(input_dir)
+#                   if f.endswith("_dge_results.tsv")]
 
-    for filepath in sorted(file_paths):
-        try:
-            df = pd.read_csv(filepath, sep="\t", index_col=0)
-            df = df.dropna(subset=["logFC", "PValue", "FDR"])
+#     for filepath in sorted(file_paths):
+#         try:
+#             df = pd.read_csv(filepath, sep="\t", index_col=0)
+#             df = df.dropna(subset=["logFC", "PValue", "FDR"])
 
-            title = os.path.basename(filepath).replace("_dge_results.tsv", "")
-            fig, ax = plt.subplots(figsize=(8, 6))
+#             title = os.path.basename(filepath).replace("_dge_results.tsv", "")
+#             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Plot volcano
-            plot_volcano_edger(df, title=title, ax=ax,
-                               logfc_thresh=logfc_thresh,
-                               fdr_thresh=fdr_thresh)
+#             # Plot volcano
+#             plot_volcano_edger(df, title=title, ax=ax,
+#                                logfc_thresh=logfc_thresh,
+#                                fdr_thresh=fdr_thresh)
 
-            # Label only predefined genes for this subclass
-            if title in subclass_genes:
-                for gene in subclass_genes[title]:
-                    if gene in df.index:
-                        row = df.loc[gene]
-                        ax.annotate(
-                            gene,
-                            (row["logFC"], -np.log10(row["PValue"])),
-                            fontsize=10,
-                            xytext=(4, 4),
-                            textcoords="offset points",
-                            arrowprops=dict(arrowstyle='-', lw=0.5),
-                        )
+#             # Label only predefined genes for this subclass
+#             if title in subclass_genes:
+#                 for gene in subclass_genes[title]:
+#                     if gene in df.index:
+#                         row = df.loc[gene]
+#                         ax.annotate(
+#                             gene,
+#                             (row["logFC"], -np.log10(row["PValue"])),
+#                             fontsize=10,
+#                             xytext=(4, 4),
+#                             textcoords="offset points",
+#                             arrowprops=dict(arrowstyle='-', lw=0.5),
+#                         )
 
-            plt.tight_layout()
-            outpath = os.path.join(output_dir, f"{title}_volcano.png")
-            plt.savefig(outpath, dpi=300)
-            plt.close()
-            print(f"Saved: {outpath}")
+#             plt.tight_layout()
+#             outpath = os.path.join(output_dir, f"{title}_volcano.png")
+#             plt.savefig(outpath, dpi=300)
+#             plt.close()
+#             print(f"Saved: {outpath}")
 
-        except Exception as e:
-            print(f"Skipping {filepath} due to error: {e}")
+#         except Exception as e:
+#             print(f"Skipping {filepath} due to error: {e}")
 
 
 if __name__ == "__main__":
     # Path to the main results directory
-    base_dir = "/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out"
+    base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out"
     # List all subfolders (comparisons)
     comparison_folders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
     for comp in comparison_folders:
         comp_dir = os.path.join(base_dir, comp)
-        output_path = os.path.join(base_dir, 'plots', f"{comp}_barplot.png")
+        output_dir = os.path.join(base_dir, '02_fdr_threshold', comp)
+
+        output_path = os.path.join(base_dir, '02_fdr_threshold', f"{comp}_barplot.png")
         print(f"Plotting barplot for comparison: {comp}")
         plot_deg_barplot(
             input_dir=comp_dir,
             output_path=output_path,
             logfc_thresh=0.1,   # accept any fold change
-            fdr_thresh=0.1,     # accept any FDR
+            fdr_thresh=0.2,     # accept any FDR
             sort_by="total",
             horizontal=True
         )
+    # base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out/02_fdr_threshold"
+    # comparison_folders = [
+    #     f for f in os.listdir(base_dir)
+    #     if os.path.isdir(os.path.join(base_dir, f))
+    # ]
+
+    # for comp in comparison_folders:
+    #     comp_dir = os.path.join(base_dir, comp)
+
+    #     # Each comparison gets its own output folder under "plots_volcano"
+    #     output_dir = os.path.join(base_dir, "plots_volcano", comp)
+    #     os.makedirs(output_dir, exist_ok=True)
+
+    #     print(f"Plotting volcano plots for comparison: {comp}")
+    #     plot_and_save_individual_volcanos(
+    #         input_dir=comp_dir,
+    #         output_dir=output_dir,   # <-- directory, not file
+    #         logfc_thresh=0.1,
+    #         fdr_thresh=0.2,
+    #         top_n=10
+    #     )
 

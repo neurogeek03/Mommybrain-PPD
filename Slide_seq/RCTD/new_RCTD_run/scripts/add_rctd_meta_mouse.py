@@ -14,23 +14,44 @@ import os
 import anndata as ad
 import pandas as pd
 import numpy as np
+import argparse
 
 print('libraries loaded!')
+
+# ========== ARGS ==========
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input_dir", help="Path to input i.e merged rctd .csv files from the various subsets")
+parser.add_argument("-o", "--output_dir", help="Path to output folder to store the anndata objects w/ metadata", default=None)
+args = parser.parse_args()
 
 # ========== PATHS ==========
 project_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD'
 data_folder = os.path.join(project_dir, 'genes_mouse_rename/slide_seq_full_adata_with_mouse_orthologs')
-rctd_out_folder = os.path.join(project_dir, 'new_RCTD_run/out_RCTD_all/umi30_delta_5_RCTD_out_merged')
-output_dir = os.path.join(project_dir,'new_RCTD_run', 'anndata_objects_mouse_d5_umi30')
+# rctd_out_folder = os.path.join(project_dir, 'new_RCTD_run/out_RCTD_all/test_ratified_ref_merged')
+rctd_out_folder =args.input_dir
+# output_dir = os.path.join(project_dir,'new_RCTD_run', 'ratified_ref_anndata_objects')
+output_dir = args.output_dir
 os.makedirs(output_dir, exist_ok=True)
 
 # ========== FIND SAMPLES ==========
 # Identify all folders like B01_3TB, B08_3TB
 # samples = [d.replace('_3TB', '') for d in os.listdir(data_folder) if d.endswith('_3TB')]
-samples = ['B03']
+# samples = ['B37']
 
-#samples = [fname.split('.')[0] for fname in os.listdir(data_folder)]
+samples = [fname.split('.')[0] for fname in os.listdir(data_folder)]
 print(samples)
+
+# samples = []
+# # Loop through all files in the directory
+# for filename in os.listdir(rctd_out_folder):
+#     if os.path.isfile(os.path.join(rctd_out_folder, filename)):
+#         parts = filename.split("_")
+#         if len(parts) > 3:
+#             sample = parts[3]  # 0-based index: 3 = 4th element
+#             samples.append(sample)
+
+# # Print the list of samples
+# print(samples)
 
 # ========== LOOP THROUGH SAMPLES ==========
 for sample in samples:
@@ -38,7 +59,7 @@ for sample in samples:
 
     h5ad_path = os.path.join(data_folder, f"{sample}.h5ad")
     rctd_out_path = os.path.join(rctd_out_folder, f"delta_5_umi30_{sample}_merged_RCTD.csv")
-    output_path = os.path.join(output_dir, f"delta_5_umi30_subclass_{sample}_with_RCTD_mouse.h5ad")
+    output_path = os.path.join(output_dir, f"delta_3_umi30_subclass_{sample}_with_RCTD_mouse.h5ad")
 
     if not os.path.exists(h5ad_path):
         print(f"❌ h5ad not found for {sample}")
@@ -79,7 +100,7 @@ for sample in samples:
     else:
         # Keep only the columns you want and add _mouse suffix
         cols_to_keep = ["spot_class", "first_type", "second_type", "min_score", "singlet_score"]
-        rctd_df = rctd_df[cols_to_keep].rename(columns={col: "RCTD_" + col + "_mouse" for col in cols_to_keep})
+        rctd_df = rctd_df[cols_to_keep].rename(columns={col: "RCTD_" + col + "_rat" for col in cols_to_keep})
 
         # Join with adata.obs
         adata.obs = adata.obs.join(rctd_df, how="left")

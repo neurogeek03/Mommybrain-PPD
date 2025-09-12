@@ -1,12 +1,24 @@
 import pandas as pd
+import argparse 
 import glob
 import os
 
-# =============== PATHS ===============
+# =============== ARGS ===============
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output_dir", required=True, help="Path to output folder to store the merged matadata csvs")
+args = parser.parse_args()
+
+output_dir = args.output_dir
+os.makedirs(output_dir, exist_ok=True)
+
+print(f"Results will be written to: {output_dir}")
+
+# =============== SCRIPT ===============
 parent_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/out_RCTD_all'
 
 samples = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
-output_dir = os.path.join(parent_dir, 'umi30_delta_5_RCTD_out_merged')
+# samples =["B37"]
+
 os.makedirs(output_dir, exist_ok=True)
 
 for sample in samples:
@@ -29,4 +41,4 @@ for sample in samples:
             rctd_merged = pd.concat((pd.read_csv(csv) for csv in csv_paths), ignore_index=True)
 
             rctd_merged.to_csv(output_path, index=False)
-            print(f"✅ Saved: {output_path}")
+            print(f"Saved: {output_path}")

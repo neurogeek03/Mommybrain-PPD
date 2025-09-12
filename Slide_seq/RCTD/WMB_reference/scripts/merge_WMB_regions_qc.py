@@ -61,18 +61,28 @@ def process_region(filepath, meta_df, qc_plot_dir, min_genes, min_counts, target
     """Loads, plots QC, filters, merges metadata, and downsamples a single region."""
     try:
         filename = os.path.basename(filepath)
-        brain_region = filename.split('-', 2)[-1].replace("-raw.h5ad", "")
+        brain_region = filename.split('-')[2]
+        # Remove any remaining suffix like '_raw_collapsed_rat_genes.h5ad'
+        brain_region = brain_region.replace('_raw_collapsed_rat_genes.h5ad', '')
         logging.info(f"🧠 Processing region: {brain_region}")
 
         ad = sc.read_h5ad(filepath)
         logging.info(f"Loaded {ad.n_obs} cells and {ad.n_vars} genes.")
 
-        # --- Plot pre-filter QC metrics ---
-        sc.pp.calculate_qc_metrics(ad, percent_top=None, log1p=False, inplace=True)
-        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-        sns.violinplot(y=ad.obs['total_counts'], ax=axes[0]).set_title('Counts per Cell')
-        sns.violinplot(y=ad.obs['n_genes_by_counts'], ax=axes[1]).set_title('Genes per Cell')
-        fig.suptitle(f'QC Metrics for {brain_region} (before filtering)')
+        # --- QC UMIs (before downsampling) ---
+        # recompute UMI counts per cell
+        umi_counts = np.array(ad.X.sum(axis=1)).flatten()
+        # recompute number of genes per cell (non-zero entries)
+        n_genes_by_counts = np.array((ad.X > 0).sum(axis=1)).flatten()
+
+        # Now plot directly
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+        sns.violinplot(y=umi_counts, ax=axes[0])
+        axes[0].set_title("Counts per Cell")
+        sns.violinplot(y=n_genes_by_counts, ax=axes[1])
+        axes[1].set_title("Genes per Cell")
+
+        fig.suptitle(f'QC Metrics for {brain_region} (after gene filtering)')
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plot_path = os.path.join(qc_plot_dir, f"{brain_region}_qc_violin.png")
         plt.savefig(plot_path, dpi=150)
@@ -93,7 +103,12 @@ def process_region(filepath, meta_df, qc_plot_dir, min_genes, min_counts, target
         meta_region = meta_df[meta_df[REGION_COL] == brain_region].set_index('cell_label')
         new_meta_cols = meta_region.columns.difference(ad.obs.columns)
         ad.obs = ad.obs.join(meta_region[new_meta_cols], how='left')
-        
+
+        logging.info(f"Metadata columns: {ad.obs.columns}")
+        logging.info(f"Number of non-NaN subclass values: {ad.obs[CELL_TYPE_COL].notna().sum()}")
+        logging.info(f"Region being processed: {brain_region}")
+        logging.info(f"Metadata rows for this region: {meta_region.shape[0]}")
+
         if CELL_TYPE_COL not in ad.obs.columns:
             logging.warning(f"Cell type column '{CELL_TYPE_COL}' not found for region {brain_region}. Skipping.")
             return None
@@ -120,7 +135,7 @@ def main():
     parser.add_argument('--metadata_csv', type=str, default='/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference/subset_cellids_celltypes_metadata_20241115.csv', help='Path to metadata CSV.')
     parser.add_argument('--min_genes', type=int, default=200, help='Minimum genes per cell.')
     parser.add_argument('--min_counts', type=int, default=500, help='Minimum counts per cell.')
-    parser.add_argument('--target_cells_per_region', type=int, default=50000, help='Max cells per region after sampling.')
+    parser.add_argument('--target_cells_per_region', type=int, default=150000, help='Max cells per region after sampling.')
     parser.add_argument('--min_cells_per_type', type=int, default=25, help='Minimum cells per type to preserve during sampling.')
     args = parser.parse_args()
 

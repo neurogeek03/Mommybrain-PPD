@@ -14,20 +14,21 @@ def main():
     parser = argparse.ArgumentParser(description="Plot cell counts per two metadata categories from an AnnData object")
     parser.add_argument("--file", "-f", required=True, help="Path to the .h5ad file")
     parser.add_argument("--meta1", "-m1", required=True, help="First metadata column in .obs")
-    parser.add_argument("--meta2", "-m2", required=False, help="Second metadata column in .obs")
+    parser.add_argument("--meta2", "-m2", required=True, help="Second metadata column in .obs")
     parser.add_argument("--out", "-o", required=True, help="Output directory")
     args = parser.parse_args()
 
     # ---- Load data ----
     adata = sc.read_h5ad(args.file)
     adata.obs_names_make_unique()
+    parameters  = "d5_umi100"
 
     # --- Count cells per combination of meta1 & meta2 ---
     counts = (
-        adata.obs
-        .groupby([args.meta1])
-        .size()
-        .reset_index(name="count")
+    adata.obs
+    .groupby([args.meta1, args.meta2])
+    .size()
+    .reset_index(name="count")
     )
 
     # # ---- Plot ----
@@ -47,7 +48,7 @@ def main():
     # print(f"Plot saved to {outfile}")
 
     # ---- Save counts to CSV ----
-    csv_file = os.path.join(args.out, f"{args.meta1}_counts.csv")
+    csv_file = os.path.join(args.out, f"{parameters}_{args.meta1}_{args.meta2}_counts.csv")
     counts.to_csv(csv_file, index=False)
     print(f"Counts saved to {csv_file}")
 

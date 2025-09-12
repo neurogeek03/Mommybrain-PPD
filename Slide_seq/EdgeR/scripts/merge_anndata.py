@@ -5,7 +5,7 @@ import os
 import anndata
 
 # ========== PATHS ==========
-in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects_mouse_d1'
+in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects'
 out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR'
 
 metadata = os.path.join(out_dir, 'slide_seq_metadata.csv')
@@ -21,7 +21,7 @@ for filename in os.listdir(in_dir):
     if os.path.isfile(filepath): 
         print(f"Found file: {filepath}")
 
-    sample = filename.split("_")[3]
+    sample = filename.split("_")[0]
     print(f'Processing sample {sample}..')
 
     # Reading in file
@@ -32,7 +32,7 @@ for filename in os.listdir(in_dir):
     ad.obs = ad.obs.merge(metadata_df, on='sample', how='left')
 
     # Filtering singlets only - OPTIONAL 
-    ad = ad[ad.obs["RCTD_spot_class"] == "singlet"].copy()
+    ad = ad[ad.obs["RCTD_spot_class_mouse"] == "singlet"].copy()
 
     adata_list.append(ad)
 
@@ -48,6 +48,8 @@ adata_all = anndata.concat(
 
 print(adata_all.obs.head())
 
+adata_all.obs_names_make_unique() # some barcodes are shared across samples 
+
 print(adata_all.obs.dtypes)
 print(adata_all.obs["pregnancy"].unique())
 print(adata_all.obs["pregnancy"].map(type).value_counts())
@@ -57,5 +59,5 @@ for col in ["pregnancy", "day", "treatment", "sample"]:
     adata_all.obs[col] = adata_all.obs[col].astype(str)
 
 
-adata_all.write('rctd_mouse_delta1_slide_seq_singlets_15.h5ad')
+adata_all.write('MOUSE_coronal_rctd_delta3_umi30_slide_seq_singlets_15.h5ad')
 

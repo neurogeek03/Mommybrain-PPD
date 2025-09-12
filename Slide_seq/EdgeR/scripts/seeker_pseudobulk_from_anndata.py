@@ -10,15 +10,33 @@ import pandas as pd
 import numpy as np
 import scipy.sparse as sp
 from collections import defaultdict
+import re
 
 # === Input & output paths ===
 current_path = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR'
-input_file = os.path.join(current_path,  "rctd_mouse_delta1_slide_seq_singlets_15.h5ad")
-output_dir = os.path.join("out","pseudobulk_outputs")
+input_file = os.path.join(current_path,  "cleaned_mouse_RCTD_slideseq_singlets_15samples.h5ad")
+output_dir = os.path.join(current_path,"out","pseudobulk_outputs")
 os.makedirs(output_dir, exist_ok=True)
 
+# # === Functions ===
+# def clean_symbol(name):
+#     parts = name.split("-")
+#     if parts[0] == ".":   # case where it's just a dot
+#         return parts[-1]  # keep after the dash
+#     else:
+#         return parts[0]
+    
 # === Load the combined AnnData object ===
 adata = sc.read_h5ad(input_file)
+
+# # =========== FIXING THE VAR SECTION ===========
+# # Remove the extra gene_id column (keep only the index)
+# adata.var = adata.var.drop(columns=["gene_id"])
+
+# # cleaning the gene_symbol column 
+# adata.var["gene_symbol"] = adata.var["name"].apply(clean_symbol)
+
+# adata.write('cleaned_mouse_RCTD_slideseq_singlets_15samples.h5ad')
 
 # === Keeing only shared celltypes ===
 celltype_col = "RCTD_first_type_mouse"  # change if needed
@@ -32,10 +50,15 @@ print("Cell types in all samples:", common_cts)
 
 # Subset adata to keep common ones
 adata = adata[adata.obs[celltype_col].isin(common_cts)].copy()
+
+adata.var["gene_symbol"] = adata.var["gene_symbol"].astype(str)
+adata.var_names = adata.var["gene_symbol"]
+adata.var_names_make_unique()
+
 print(adata)
 
 # === Check for required columns ===
-if 'RCTD_second_type' not in adata.obs:
+if 'RCTD_first_type_mouse' not in adata.obs:
     raise ValueError("'RCTD_first_type_mouse' column not found in adata.obs")
 if 'sample' not in adata.obs:
     raise ValueError("'sample' column not found in adata.obs")

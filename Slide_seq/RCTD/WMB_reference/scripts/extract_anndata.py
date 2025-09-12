@@ -10,7 +10,7 @@ out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference_coronal/ann
 os.makedirs(out_dir, exist_ok=True)  # Ensure output directory exists
 
 project_path = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD"
-filtered_ad = os.path.join(project_path, "WMB_reference_coronal", "SMALLER_ref_ABC_coronal_max30k_min25.h5ad")
+filtered_ad = os.path.join(project_path, "WMB_reference_coronal", "out", "766k_celltypes_WMB_high_qual_cells_all_regions_max100k.h5ad")
 
 # ========== FILE CONVERSION ==========
 adata = sc.read_h5ad(filtered_ad)
