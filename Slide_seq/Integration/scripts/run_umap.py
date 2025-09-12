@@ -7,17 +7,19 @@ import pandas as pd
 # filename ='class_B03_with_RCTD_mouse.h5ad'
 # adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects/{filename}" 
 filename = 'B32_with_RCTD_mouse.h5ad'
-adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/ratified_ref_anndata_objects/{filename}"
+adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects/{filename}"
 out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/umaps"        
 os.makedirs(out_dir, exist_ok=True)
 
 sample = filename.split('_')[1]
 
+meta_column = "RCTD_spot_class_mouse"
+
 # sample = 'all_data'
 
 # Load harmonized AnnData
 adata_all = sc.read_h5ad(adata_path)
-adata_all = adata_all[adata_all.obs["RCTD_spot_class_rat"] == "singlet"].copy()
+adata_all = adata_all[adata_all.obs[meta_column] == "singlet"].copy()
 
 # print(adata_all.obs["RCTD_second_type"].unique().tolist())
 print('starting computations')
@@ -89,9 +91,9 @@ label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 # ========== PLOTTING ==========
 
 # 1. RCTD_second_type
-sc.pl.umap(adata_all, color='RCTD_first_type_rat', palette=label_to_hex, show=True)
+sc.pl.umap(adata_all, color='RCTD_first_type_mouse', palette=label_to_hex, show=True)
 plt.title(f"UMAP of singlets after RCTD rat", fontsize=14)
-plt.savefig(os.path.join(out_dir, f"subclas_{sample}_RAT_Slide-seq_umap_{sample}_singlets.png"),
+plt.savefig(os.path.join(out_dir, f"subclas_{sample}_MOUSE_Slide-seq_umap_{sample}_singlets.png"),
             dpi=300, bbox_inches='tight', pad_inches=0.1)
 plt.close()
 

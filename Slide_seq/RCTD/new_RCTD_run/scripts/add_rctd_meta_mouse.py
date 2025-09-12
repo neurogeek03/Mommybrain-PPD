@@ -38,7 +38,10 @@ os.makedirs(output_dir, exist_ok=True)
 # samples = [d.replace('_3TB', '') for d in os.listdir(data_folder) if d.endswith('_3TB')]
 # samples = ['B37']
 
-samples = [fname.split('.')[0] for fname in os.listdir(data_folder)]
+# samples = [fname.split('.')[0] for fname in os.listdir(data_folder)]
+# ========== GET FILES ==========
+rctd_csvs = sorted([f for f in os.listdir(rctd_out_folder) if f.endswith("_merged_RCTD.csv")])
+samples = [f.split("_")[0] for f in rctd_csvs]
 print(samples)
 
 # samples = []
@@ -58,8 +61,8 @@ for sample in samples:
     print(f"🔄 Processing sample: {sample}")
 
     h5ad_path = os.path.join(data_folder, f"{sample}.h5ad")
-    rctd_out_path = os.path.join(rctd_out_folder, f"delta_5_umi30_{sample}_merged_RCTD.csv")
-    output_path = os.path.join(output_dir, f"delta_3_umi30_subclass_{sample}_with_RCTD_mouse.h5ad")
+    rctd_out_path = os.path.join(rctd_out_folder, f"{sample}_merged_RCTD.csv")
+    output_path = os.path.join(output_dir, f"{sample}_with_RCTD_mouse.h5ad")
 
     if not os.path.exists(h5ad_path):
         print(f"❌ h5ad not found for {sample}")
@@ -95,15 +98,33 @@ for sample in samples:
         n_matched = rctd_df.index.isin(adata.obs.index).sum()
         print(f"🧬 RCTD: matched {n_matched} of {n_total} barcodes ({n_matched / n_total:.2%})")
 
-    if n_matched == 0:
-        print("⚠️  No barcodes matched! Skipping RCTD merge.")
-    else:
-        # Keep only the columns you want and add _mouse suffix
-        cols_to_keep = ["spot_class", "first_type", "second_type", "min_score", "singlet_score"]
-        rctd_df = rctd_df[cols_to_keep].rename(columns={col: "RCTD_" + col + "_rat" for col in cols_to_keep})
+        if n_matched == 0:
+            print("⚠️  No barcodes matched! Skipping RCTD merge.")
+        else:
+            # Keep only the columns you want and add _mouse suffix
+            cols_to_keep = ["spot_class", "first_type", "second_type", "min_score", "singlet_score"]
+            rctd_df = rctd_df[cols_to_keep].rename(
+                columns={col: "RCTD_" + col + "_rat" for col in cols_to_keep}
+            )
 
-        # Join with adata.obs
-        adata.obs = adata.obs.join(rctd_df, how="left")
+            # Join with adata.obs
+            adata.obs = adata.obs.join(rctd_df, how="left")
+
+    # if rctd_df is not None:
+    #     # Check match stats
+    #     n_total = len(rctd_df)
+    #     n_matched = rctd_df.index.isin(adata.obs.index).sum()
+    #     print(f"🧬 RCTD: matched {n_matched} of {n_total} barcodes ({n_matched / n_total:.2%})")
+
+    # if n_matched == 0:
+    #     print("⚠️  No barcodes matched! Skipping RCTD merge.")
+    # else:
+    #     # Keep only the columns you want and add _mouse suffix
+    #     cols_to_keep = ["spot_class", "first_type", "second_type", "min_score", "singlet_score"]
+    #     rctd_df = rctd_df[cols_to_keep].rename(columns={col: "RCTD_" + col + "_rat" for col in cols_to_keep})
+
+    #     # Join with adata.obs
+    #     adata.obs = adata.obs.join(rctd_df, how="left")
 
 
     # ========== SAVE OUTPUT ==========

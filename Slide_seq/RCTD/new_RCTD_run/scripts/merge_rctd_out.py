@@ -5,16 +5,18 @@ import os
 
 # =============== ARGS ===============
 parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input_dir", required=True, help="Path to folder with per-subset .csvs from RCTD")
 parser.add_argument("-o", "--output_dir", required=True, help="Path to output folder to store the merged matadata csvs")
 args = parser.parse_args()
 
+input_dir = args.input_dir
 output_dir = args.output_dir
 os.makedirs(output_dir, exist_ok=True)
 
 print(f"Results will be written to: {output_dir}")
 
 # =============== SCRIPT ===============
-parent_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/out_RCTD_all'
+parent_dir = input_dir
 
 samples = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
 # samples =["B37"]
@@ -22,10 +24,10 @@ samples = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(paren
 os.makedirs(output_dir, exist_ok=True)
 
 for sample in samples:
-    print(f"Processing sample: {sample}...")
+    print(f"🔄 Processing sample: {sample}...")
 
     # Define output path
-    output_path = os.path.join(output_dir, f"delta_5_umi30_{sample}_merged_RCTD.csv")
+    output_path = os.path.join(output_dir, f"{sample}_merged_RCTD.csv")
 
     # Skip if already exists
     if os.path.exists(output_path):

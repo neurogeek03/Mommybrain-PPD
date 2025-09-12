@@ -81,7 +81,7 @@ for h5ad_file in h5ad_files:
     top30_celltypes = (
         merged_df[type_column]
         .value_counts()
-        .nlargest(40)
+        .nlargest(30)
         .index
     )
 
