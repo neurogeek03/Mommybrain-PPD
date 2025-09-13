@@ -6,15 +6,16 @@ import pandas as pd
 from scipy import io, sparse
 
 # ========== PATHS ==========
-out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference_coronal/anndata_export"
+out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/Slide_tags_reference"
 os.makedirs(out_dir, exist_ok=True)  # Ensure output directory exists
 
 project_path = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD"
-filtered_ad = os.path.join(project_path, "WMB_reference_coronal", "out", "766k_celltypes_WMB_high_qual_cells_all_regions_max100k.h5ad")
+filtered_ad = "/scratch/mfafouti/Mommybrain/Slide_tags/Integration/scanpy/integrated_Harmony_t.h5ad"
 
 # ========== FILE CONVERSION ==========
 adata = sc.read_h5ad(filtered_ad)
 print("Loaded filtered .h5ad file.")
+adata.obs_names_make_unique()
 print(adata.var.columns)
 print(adata.var_names[:5])  # using ensembl IDs for the FILTERED_persample_subclass_doublets_harmony.h5ad
 
@@ -54,8 +55,8 @@ adata.obs.to_csv(os.path.join(out_dir, "barcodes_metadata.csv"))  # rows = cells
 print("Exported cell barcodes to barcodes_metadata.csv.")
 
 # export cell metadata
-adata.obs[["subclass"]].to_csv(os.path.join(out_dir, "subclass_labels.csv"), index=True,index_label="cell_label")
+adata.obs[["MapMyCells_cell_type"]].to_csv(os.path.join(out_dir, "subclass_labels.csv"), index=True,index_label="cell_label")
 print("Exported cell metadata to mapmycells.csv.")
 
-adata.obs[["class"]].to_csv(os.path.join(out_dir, "class_labels.csv"), index=True,index_label="cell_label")
-print("Exported cell metadata to mapmycells.csv.")
+# adata.obs[["class"]].to_csv(os.path.join(out_dir, "class_labels.csv"), index=True,index_label="cell_label")
+# print("Exported cell metadata to mapmycells.csv.")

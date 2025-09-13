@@ -3,7 +3,7 @@ library(Matrix)
 library(Seurat)
 
 # ========== Set paths ==========
-out_dir <- "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/WMB_reference_coronal/anndata_export"
+out_dir <- "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/Slide_tags_reference"
 matrix_path <- file.path(out_dir, "matrix.mtx")
 features_path <- file.path(out_dir, "features.csv")
 barcodes_path <- file.path(out_dir, "barcodes_metadata.csv")
@@ -30,7 +30,7 @@ seurat_obj <- CreateSeuratObject(counts = expr_matrix, meta.data = barcodes)
 seurat_obj <- AddMetaData(seurat_obj, metadata = meta_columns)
 
 # ========== Save RDS ==========
-saveRDS(seurat_obj, file = file.path(out_dir, "ABC_ref_coronal_subclass_50k_25.rds"))
+saveRDS(seurat_obj, file = file.path(out_dir, "slide_tags_reference_unfiltered.rds"))
 
 
 # # PREVIEW Ref file:
