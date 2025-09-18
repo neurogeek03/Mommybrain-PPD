@@ -22,6 +22,11 @@ umaps="$base_folder/umaps"
 
 mkdir -p "$merged" "$anndata" "$plots" "$umaps"
 
+# Activate correct conda env 
+source /scratch/mfafouti/miniforge3/etc/profile.d/conda.sh
+conda activate anndata_env 
+echo "Anndata environment activated!"
+
 # Run scripts in sequence, only if needed
 echo "Merging metadata files from subsets..."
 if [ -z "$(ls -A "$merged")" ]; then
