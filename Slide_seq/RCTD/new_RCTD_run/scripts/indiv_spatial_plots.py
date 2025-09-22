@@ -64,9 +64,6 @@ for h5ad_file in h5ad_files:
         print(f"⚠️ Skipping {sample}: no singlet spots")
         continue
 
-    # Remove cells where mapmycells_subclass_name is '01 IT-ET Glut'
-    singlets = singlets[singlets.obs[type_column] != '01 IT-ET Glut']
-
     if type_column not in singlets.obs.columns or "X_spatial" not in singlets.obsm:
         print(f"⚠️ Skipping {sample}: missing data")
         continue
