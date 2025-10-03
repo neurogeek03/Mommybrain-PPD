@@ -4,11 +4,14 @@ import numpy as np
 import os
 import anndata
 
-# ========== PATHS ==========
-in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects'
-out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR'
+# ========== PARAMS ==========
+singlet_score_trheshold = 0
 
-metadata = os.path.join(out_dir, 'slide_seq_metadata.csv')
+# ========== PATHS ==========
+in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/OUT/FINAL_RCTD_newgenelist/anndata_objects' #CHANGE
+out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist' #CHANGE
+metadata = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/slide_seq_metadata.csv'
+os.makedirs(out_dir, exist_ok=True)
 
 # ========== READING IN METADATA ==========
 metadata_df = pd.read_csv(metadata)
@@ -32,8 +35,10 @@ for filename in os.listdir(in_dir):
     ad.obs = ad.obs.merge(metadata_df, on='sample', how='left')
 
     # Filtering singlets only - OPTIONAL 
-    ad = ad[ad.obs["RCTD_spot_class_mouse"] == "singlet"].copy()
+    ad = ad[ad.obs["RCTD_spot_class_rat"] == "singlet"].copy()
 
+    # Filtering singlets score = 330
+    ad = ad[ad.obs["RCTD_singlet_score_rat"] > singlet_score_trheshold].copy()
     adata_list.append(ad)
 
     print(f'Added {filename} to the list!')
@@ -59,5 +64,5 @@ for col in ["pregnancy", "day", "treatment", "sample"]:
     adata_all.obs[col] = adata_all.obs[col].astype(str)
 
 
-adata_all.write('MOUSE_coronal_rctd_delta3_umi30_slide_seq_singlets_15.h5ad')
+adata_all.write(os.path.join(out_dir,f'NEW_genelist_singlet_score_{singlet_score_trheshold}_slide_seq_15.h5ad'))
 

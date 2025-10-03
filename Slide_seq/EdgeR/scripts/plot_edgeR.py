@@ -15,7 +15,7 @@ import os
 # ========== PARAMETERS ==========
 project_dir = '/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_tags/EdgeR'
 input_dir = os.path.join(project_dir,'example_plots')
-output_dir = os.path.join(project_dir, 'figures', 'example_plots_annotated')
+output_dir = os.path.join(project_dir, 'figures')
 
 # animals = ["BC28", "BC3", "BC9", "BC15", "BC14", "BC13"]
 # results_dict = {}
@@ -311,39 +311,41 @@ if __name__ == "__main__":
     base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out"
     # List all subfolders (comparisons)
     comparison_folders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
-    for comp in comparison_folders:
-        comp_dir = os.path.join(base_dir, comp)
-        output_dir = os.path.join(base_dir, '02_fdr_threshold', comp)
 
-        output_path = os.path.join(base_dir, '02_fdr_threshold', f"{comp}_barplot.png")
-        print(f"Plotting barplot for comparison: {comp}")
-        plot_deg_barplot(
-            input_dir=comp_dir,
-            output_path=output_path,
-            logfc_thresh=0.1,   # accept any fold change
-            fdr_thresh=0.2,     # accept any FDR
-            sort_by="total",
-            horizontal=True
-        )
+    # for comp in comparison_folders:
+    #     comp_dir = os.path.join(base_dir, comp)
+    #     output_dir = os.path.join(base_dir, '01_fdr_threshold', comp)
+
+    #     output_path = os.path.join(base_dir, '01_fdr_threshold', f"{comp}_barplot.png")
+    #     print(f"Plotting barplot for comparison: {comp}")
+    #     plot_deg_barplot(
+    #         input_dir=comp_dir,
+    #         output_path=output_path,
+    #         logfc_thresh=0.1,   # accept any fold change
+    #         fdr_thresh=0.1,     # accept any FDR
+    #         sort_by="total",
+    #         horizontal=True
+    #     )
+
     # base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out/02_fdr_threshold"
     # comparison_folders = [
     #     f for f in os.listdir(base_dir)
     #     if os.path.isdir(os.path.join(base_dir, f))
     # ]
 
-    # for comp in comparison_folders:
-    #     comp_dir = os.path.join(base_dir, comp)
+    for comp in comparison_folders:
+        comp_dir = os.path.join(base_dir, comp)
 
-    #     # Each comparison gets its own output folder under "plots_volcano"
-    #     output_dir = os.path.join(base_dir, "plots_volcano", comp)
-    #     os.makedirs(output_dir, exist_ok=True)
+        # Each comparison gets its own output folder under "plots_volcano"
+        output_dir = os.path.join(base_dir, "plots_volcano", comp)
+        os.makedirs(output_dir, exist_ok=True)
 
-    #     print(f"Plotting volcano plots for comparison: {comp}")
-    #     plot_and_save_individual_volcanos(
-    #         input_dir=comp_dir,
-    #         output_dir=output_dir,   # <-- directory, not file
-    #         logfc_thresh=0.1,
-    #         fdr_thresh=0.2,
-    #         top_n=10
-    #     )
+        print(f"Plotting volcano plots for comparison: {comp}")
+        plot_and_save_individual_volcanos(
+            input_dir=comp_dir,
+            output_dir=output_dir,   # <-- directory, not file
+            logfc_thresh=0.1,
+            fdr_thresh=0.1,
+            top_n=10
+        )
 

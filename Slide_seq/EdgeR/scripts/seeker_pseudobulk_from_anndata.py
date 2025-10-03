@@ -14,7 +14,8 @@ import re
 
 # === Input & output paths ===
 current_path = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR'
-input_file = os.path.join(current_path,  "cleaned_mouse_RCTD_slideseq_singlets_15samples.h5ad")
+adata_path = '/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects'
+input_file = os.path.join(current_path,  "adata_filtered_220626_10_in_any_2_samples_singlet_score_300.h5ad")
 output_dir = os.path.join(current_path,"out","pseudobulk_outputs")
 os.makedirs(output_dir, exist_ok=True)
 
@@ -39,7 +40,7 @@ adata = sc.read_h5ad(input_file)
 # adata.write('cleaned_mouse_RCTD_slideseq_singlets_15samples.h5ad')
 
 # === Keeing only shared celltypes ===
-celltype_col = "RCTD_first_type_mouse"  # change if needed
+celltype_col = "RCTD_first_type_rat"  # change if needed
 
 # Get cell types per sample
 cts_per_sample = adata.obs.groupby("sample")[celltype_col].unique()

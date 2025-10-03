@@ -3,8 +3,9 @@ import scanpy as sc
 import pandas as pd
 import numpy as np
 
-out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Cell_type_markers/out"
-ad_file = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects/delta_5_umi30_subclass_B03_with_RCTD_mouse.h5ad"
+out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Cell_type_markers/out/updated_marker_plot"
+os.makedirs(out_dir, exist_ok=True) 
+ad_file = "/scratch/mfafouti/Mommybrain/Slide_seq/Cell_type_markers/data/filtered_10_subclass_sample_umap_cleaned_mouse_RCTD_slideseq_singlets_15samples.h5ad"
 
 # --- Read data ---
 adata = sc.read_h5ad(ad_file)
