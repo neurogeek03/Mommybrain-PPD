@@ -7,6 +7,9 @@ Spatial Transcriptomics (Slide-seq V2, Slide-Tags) project on Postpartum Depress
 **Slide-seq**: a spatial bead can capture 1 or more cells, collecting information from both the cytoplasm and the nucleus
 
 **Slide-tags**: a spatial bead can capture 1 cell only, collecting information from its nucleus
+### Pre-processing: 
+- Doublet removal using: https://github.com/plger/scDblFinder
+- Cell typing using: https://github.com/AllenInstitute/cell_type_mapper?tab=readme-ov-file 
 
 ## Containers used: 
 ### Seurat v5 container
