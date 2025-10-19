@@ -72,7 +72,8 @@ def plot_volcano_edger(res_df, title, ax=None, logfc_thresh=0.1, fdr_thresh=0.1)
 
 def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
                      logfc_thresh=1.0, fdr_thresh=0.05, min_genes=1,
-                     sort_by="total", figsize=(12, 6), horizontal=False):
+                     sort_by="total", figsize=(12, 6), horizontal=False,
+                     log_scale=False):
     """
     Generate a barplot of number of significantly up/downregulated genes per file.
 
@@ -85,6 +86,7 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
     - sort_by: str, one of "total", "upregulated", "downregulated"
     - figsize: tuple, size of the figure
     - horizontal: bool, if True, plot horizontal bars
+    - log_scale: bool, if True, use log scale for the count axis
     """
     file_paths = [os.path.join(input_dir, f) for f in os.listdir(input_dir)
                   if f.endswith("_edgeR_results.tsv")]
@@ -128,7 +130,8 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
                left=df_summary["downregulated"],
                label="Upregulated (CORT > OIL)", color='red')
         ax.set_xlabel("Number of significant genes")
-        #ax.legend(handles=[bar1, bar2])
+        if log_scale:
+            ax.set_xscale("log")
     else:
         x = np.arange(len(df_summary))
         width = 0.35
@@ -137,7 +140,6 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
         ax.set_xticks(x)
         ax.set_xticklabels(df_summary["subclass"], rotation=90, fontsize=8)
         ax.set_ylabel("Number of significant genes")
-        #ax.legend()
 
     ax.set_title(f"DE genes per subclass (|log2FC| > {logfc_thresh}, FDR < {fdr_thresh})", fontsize=12)
     plt.tight_layout()
@@ -308,7 +310,7 @@ def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, f
 
 if __name__ == "__main__":
     # Path to the main results directory
-    base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out"
+    base_dir = "/scratch/mfafouti/Mommybrain/Slide_tags/EdgeR/out"
     # List all subfolders (comparisons)
     comparison_folders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
 
@@ -324,14 +326,16 @@ if __name__ == "__main__":
     #         logfc_thresh=0.1,   # accept any fold change
     #         fdr_thresh=0.1,     # accept any FDR
     #         sort_by="total",
+    #         figsize=(10, 12),
+    #         # log_scale = True,
     #         horizontal=True
     #     )
 
     # base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out/02_fdr_threshold"
-    # comparison_folders = [
-    #     f for f in os.listdir(base_dir)
-    #     if os.path.isdir(os.path.join(base_dir, f))
-    # ]
+    comparison_folders = [
+        f for f in os.listdir(base_dir)
+        if os.path.isdir(os.path.join(base_dir, f))
+    ]
 
     for comp in comparison_folders:
         comp_dir = os.path.join(base_dir, comp)
