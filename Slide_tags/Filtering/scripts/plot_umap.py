@@ -13,14 +13,14 @@ cell_type_column = 'subclass_name'
 
 # ============ PATHS ============
 project_folder = Path('/scratch/mfafouti/Mommybrain/Slide_tags/Filtering')
-in_dir = project_folder / 'NEW_list_merged_filtered'
+# in_dir = project_folder / 'NEW_list_merged_filtered'
+out_dir = project_folder / 'out'
 
-ad_path = in_dir / "bootsprap_0.6_umap_116714_mincells_10_in_2_samples_slide_tags.h5ad"
+ad_path = out_dir / "PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad"
 
 adata = sc.read_h5ad(ad_path)
-
 file_stem = ad_path.stem
-fig_path = in_dir / f"UMAP_{cell_type_column}_{file_stem}.html"
+fig_path = out_dir / f"{cell_type_column}_{file_stem}.html"
 
 # ============ GET COLORS ============
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
@@ -50,7 +50,7 @@ umap_df["label_number"] = umap_df[cell_type_column].str.split(" ").str[0].astype
 ordered_labels = umap_df.groupby(cell_type_column, observed=True)["label_number"].first().sort_values().index.tolist()
 umap_df[cell_type_column] = pd.Categorical(umap_df[cell_type_column], categories=ordered_labels, ordered=True)
 
-# umap_df[cell_type_column] = (umap_df[cell_type_column])
+umap_df[cell_type_column] = (umap_df[cell_type_column])
 
 umap_df = umap_df.sort_values(cell_type_column)
 umap_df.head()

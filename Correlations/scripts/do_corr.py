@@ -46,7 +46,7 @@ def analyze_correlations(df_dir, x_col, y_col, output_dir="correlation_plots"):
 
 # === Run over all subdirectories ===
 project_dir = Path.cwd().parents[0]
-input_dir = project_dir / 'out'
+input_dir = project_dir / 'out' / 'update'
 
 for subdir in input_dir.iterdir():
     if subdir.is_dir():

@@ -1,3 +1,5 @@
 dataset,correlation
-filtered151_TH_Prkcd_Grin2c_Glut,-0.3449663553989149
-filtered327_Oligo_NN,-0.1900042886650876
+filtered_017_CA3_Glut,
+filtered_037_DG_Glut,-0.9672519716414298
+filtered_151_TH_Prkcd_Grin2c_Glut,-0.15605963181176366
+filtered_327_Oligo_NN,-0.08764415449818963
