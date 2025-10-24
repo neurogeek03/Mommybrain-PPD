@@ -8,6 +8,7 @@ from matplotlib.lines import Line2D
 import argparse
 import plotly.express as px 
 import plotly.graph_objects as go
+from pandas.api.types import CategoricalDtype
 
 # ========== ARGS ==========
 parser = argparse.ArgumentParser()
@@ -67,7 +68,13 @@ for h5ad_file in h5ad_files:
     #     print(f"⚠️ Skipping {sample}: no RCTD_spot_class_rat")
     #     continue
 
-    singlets = adata[adata.obs[spot_class_column].notna()].copy()
+    # singlets = adata[adata.obs[spot_class_column].notna()].copy()
+    # Define a list of the categories you want to keep
+    categories_to_keep = ["singlet", "doublet_certain", "doublet_uncertain"]
+
+    # Use the .isin() method to filter for all categories in the list
+    singlets = adata[adata.obs[spot_class_column].isin(categories_to_keep)].copy()
+
     # if singlets.shape[0] == 0:
     #     print(f"⚠️ Skipping {sample}: no singlet spots")
     #     continue
@@ -97,7 +104,7 @@ for h5ad_file in h5ad_files:
     # # Set as categorical with desired order
     # merged_df["celltype_plot"] = pd.Categorical(
     #     merged_df["celltype_plot"],
-    #     categories=list(top30_celltypes) + ["Other"],
+    #     # categories=list(top30_celltypes) + ["Other"],
     #     ordered=True
     # )
 
@@ -107,22 +114,30 @@ for h5ad_file in h5ad_files:
             return int(str(celltype).split("_", 1)[0])
         except (ValueError, IndexError):
             return 99999
-        
-    ordered_celltypes = sorted(
-        [ct for ct in merged_df[type_column]],key=extract_num)
+    
+    unique_celltypes = merged_df[type_column].unique()
 
+    # Sort the unique list to create your desired order
+    ordered_celltypes = sorted(
+        unique_celltypes,
+        key=extract_num
+    )
+    # Create a new CategoricalDtype with your specific order
+    cat_type = CategoricalDtype(categories=ordered_celltypes, ordered=True)
+
+    # Update the column in the DataFrame to use this new ordered type
+    # This tells pandas the "correct" way to sort this column
+    merged_df[type_column] = merged_df[type_column].astype(cat_type)
+
+    # --- 3. Sort the Entire DataFrame ---
+
+    # Now, .sort_values() will use your custom order automatically
+    merged_df_sorted = merged_df.sort_values(by=type_column)
     # # Sort categories based on number (ascending), with "Other" last
     # ordered_celltypes = sorted(
     #     [ct for ct in merged_df["celltype_plot"].cat.categories if ct != "Other"],
     #     key=extract_num
     # ) + ["Other"]
-
-    # # Apply new category order
-    merged_df["celltype_plot"] = pd.Categorical(
-        merged_df["celltype_plot"],
-        categories=ordered_celltypes,
-        ordered=True
-    )
 
     # -----------------------
     # Build palette using CSV
@@ -137,15 +152,17 @@ for h5ad_file in h5ad_files:
 
     # ========== INDIVIDUAL PLOT ==========
     fig = px.scatter(
-    merged_df,
+    merged_df_sorted,
     x="x",
     y="y",
-    color='celltype_plot',
+    color=type_column,
     color_discrete_map=label_to_hex,  # same palette dict you used
     hover_data={
             "RCTD_first_type_rat": True,
+            "RCTD_spot_class_rat": True,
             "x": False,   # explicitly hide
             "y": False,   # explicitly hide
+
         }
     )
     # match style
@@ -158,7 +175,7 @@ for h5ad_file in h5ad_files:
 
     # titles and labels
     fig.update_layout(
-        title=f"{sample} ({len(merged_df)} beads, colored by {color})",
+        title=f"{sample} ({len(merged_df_sorted)} beads, colored by {color})",
         xaxis_title="x",
         yaxis_title="y",
         legend_title=type_column, 
