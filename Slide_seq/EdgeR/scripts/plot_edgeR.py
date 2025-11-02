@@ -13,9 +13,9 @@ import pandas as pd
 import os
 
 # ========== PARAMETERS ==========
-project_dir = '/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_tags/EdgeR'
-input_dir = os.path.join(project_dir,'example_plots')
-output_dir = os.path.join(project_dir, 'figures')
+# project_dir = '/scratch/s/shreejoy/mfafouti/Mommybrain/Slide_tags/EdgeR'
+# input_dir = os.path.join(project_dir,'example_plots')
+# output_dir = os.path.join(project_dir, 'figures')
 
 # animals = ["BC28", "BC3", "BC9", "BC15", "BC14", "BC13"]
 # results_dict = {}
@@ -72,7 +72,7 @@ def plot_volcano_edger(res_df, title, ax=None, logfc_thresh=0.1, fdr_thresh=0.1)
 
 def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
                      logfc_thresh=1.0, fdr_thresh=0.05, min_genes=1,
-                     sort_by="total", figsize=(12, 6), horizontal=False,
+                     sort_by="total", figsize=(12, 8), horizontal=False,
                      log_scale=False):
     """
     Generate a barplot of number of significantly up/downregulated genes per file.
@@ -121,6 +121,12 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
     df_summary["total"] = df_summary["upregulated"] + df_summary["downregulated"]
     df_summary = df_summary.sort_values(sort_by)
 
+    # --- Get number of bars for margin calculation ---
+    num_bars = len(df_summary)
+    if num_bars == 0:
+        print("No subclasses to plot after filtering.")
+        return
+
     # Plot
     fig, ax = plt.subplots(figsize=figsize)
     if horizontal:
@@ -132,15 +138,59 @@ def plot_deg_barplot(input_dir, output_path="/DE_summary_barplot.png",
         ax.set_xlabel("Number of significant genes")
         if log_scale:
             ax.set_xscale("log")
+        
+        # --- START: Added code for HORIZONTAL plot ---
+        # 1. Remove top and bottom whitespace
+        ax.set_ylim(num_bars - 0.5, -0.5)
+        
+        # 2. Remove plot borders (spines), keep x-axis
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False) # Hide the y-axis line
+        ax.tick_params(axis='y', length=0) # Hide the y-axis ticks
+        # --- END: Added code ---
+
     else:
-        x = np.arange(len(df_summary))
+        x = np.arange(num_bars)
         width = 0.35
         bar1 = ax.bar(x - width/2, df_summary["downregulated"], width, label="Downregulated (OIL > CORT)", color='blue')
         bar2 = ax.bar(x + width/2, df_summary["upregulated"], width, label="Upregulated (CORT > OIL)", color='red')
         ax.set_xticks(x)
         ax.set_xticklabels(df_summary["subclass"], rotation=90, fontsize=8)
         ax.set_ylabel("Number of significant genes")
+        if log_scale:
+            ax.set_yscale("log")
+            
+        # --- START: Added code for VERTICAL plot ---
+        # 1. Remove left and right whitespace
+        ax.set_xlim(-0.5, num_bars - 0.5)
 
+        # 2. Remove plot borders (spines), keep y-axis
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False) # Hide the x-axis line
+        ax.tick_params(axis='x', length=0) # Hide the x-axis ticks
+        # --- END: Added code ---
+    # # Plot
+    # fig, ax = plt.subplots(figsize=figsize)
+    # if horizontal:
+    #     bar1 = ax.barh(df_summary["subclass"], df_summary["downregulated"],
+    #            label="Downregulated (OIL > CORT)", color='blue')
+    #     bar2 = ax.barh(df_summary["subclass"], df_summary["upregulated"],
+    #            left=df_summary["downregulated"],
+    #            label="Upregulated (CORT > OIL)", color='red')
+    #     ax.set_xlabel("Number of significant genes")
+    #     if log_scale:
+    #         ax.set_xscale("log")
+    # else:
+    #     x = np.arange(len(df_summary))
+    #     width = 0.35
+    #     bar1 = ax.bar(x - width/2, df_summary["downregulated"], width, label="Downregulated (OIL > CORT)", color='blue')
+    #     bar2 = ax.bar(x + width/2, df_summary["upregulated"], width, label="Upregulated (CORT > OIL)", color='red')
+    #     ax.set_xticks(x)
+    #     ax.set_xticklabels(df_summary["subclass"], rotation=90, fontsize=8)
+    #     ax.set_ylabel("Number of significant genes")
+    
     ax.set_title(f"DE genes per subclass (|log2FC| > {logfc_thresh}, FDR < {fdr_thresh})", fontsize=12)
     plt.tight_layout()
 
@@ -326,16 +376,16 @@ if __name__ == "__main__":
     #         logfc_thresh=0.1,   # accept any fold change
     #         fdr_thresh=0.1,     # accept any FDR
     #         sort_by="total",
-    #         figsize=(10, 12),
+    #         figsize=(10, 8),
     #         # log_scale = True,
     #         horizontal=True
     #     )
 
     # base_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/edger_out/02_fdr_threshold"
-    comparison_folders = [
-        f for f in os.listdir(base_dir)
-        if os.path.isdir(os.path.join(base_dir, f))
-    ]
+    # comparison_folders = [
+    #     f for f in os.listdir(base_dir)
+    #     if os.path.isdir(os.path.join(base_dir, f))
+    # ]
 
     for comp in comparison_folders:
         comp_dir = os.path.join(base_dir, comp)
@@ -350,6 +400,6 @@ if __name__ == "__main__":
             output_dir=output_dir,   # <-- directory, not file
             logfc_thresh=0.1,
             fdr_thresh=0.1,
-            top_n=10
+            top_n=30
         )
 

@@ -23,3 +23,8 @@ apptainer pull seurat_v5.sif docker://satijalab/seurat:5.0.0
 module load apptainer
 apptainer pull edger.sif docker://chrisamiller/edger:4.4.2
 ```
+### sccoda container 
+```bash
+module load apptainer
+apptainer pull sccoda_tf.sif docker://ghcr.io/neurogeek03/sccoda:tf_fix
+```
