@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import numpy as np
 import scipy.sparse as sp
 
-filename = 'RAW_NEW_genelist_singlet_score_0_slide_seq_15.h5ad' #CHANGE
+filename = '1054147_umap_filtered_0_NEW_genelist_slide_seq_15.h5ad' #CHANGE
 # /scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/
 adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
 object_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects"
@@ -16,6 +16,7 @@ out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenel
 os.makedirs(out_dir, exist_ok=True)
 
 sample = 'filtered'
+color_col = 'RCTD_singlet_score_rat'
 
 # ============ GET COLORS ============
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
@@ -39,7 +40,9 @@ label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 # ============ LOADING & FILTERING DATA ============
 # Load harmonized AnnData
 adata = sc.read_h5ad(adata_path)
-adata = adata[adata.obs["RCTD_singlet_score_rat"] > 300].copy()
+n_unique = adata.obs["RCTD_spot_class_rat"].nunique()
+print("Number of unique values:", n_unique)
+# adata = adata[adata.obs["RCTD_singlet_score_rat"] > 300].copy()
 
 # Count cells per sample and RCTD_first_type_rat
 counts = adata.obs.groupby(['sample', 'RCTD_first_type_rat']).size().reset_index(name='count')
@@ -76,58 +79,61 @@ adata_filtered.write(ad_filtered_path)
 # adata_filtered = adata
 num_cells = adata_filtered.n_obs
 
-# # ------------ Building legend ------------
-# type_column = "RCTD_first_type_rat"
-# type_counts = adata_filtered.obs[type_column].value_counts()
+# ------------ Building legend ------------
+type_column = "RCTD_first_type_rat"
+type_counts = adata_filtered.obs[type_column].value_counts()
 
-# # Sanity check
-# n_unique = adata_filtered.obs[type_column].nunique()
-# n_unique = len(type_counts)
-# print(f"Unique {type_column}: {n_unique}")
+# Sanity check
+n_unique = adata_filtered.obs[type_column].nunique()
+n_unique = len(type_counts)
+print(f"Unique {type_column}: {n_unique}")
 
-# top_types = type_counts.head(30).index.tolist()
-# # Build legend elements using your label_to_hex
-# legend_elements = [Patch(facecolor=label_to_hex.get(t, "#808080"), label=t) for t in top_types]
-# sc.pl.umap(adata_filtered, color='RCTD_first_type_rat', palette=label_to_hex, show=True)
-# plt.title(f"UMAP of singlets (n = {num_cells}) after RCTD mouse", fontsize=14)
-# # Build custom legend for top 30 only
-# plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1.02, 0.5), title="Subclasses present with min n_cells=10 at all samples", fontsize=7)
-# plt.savefig(os.path.join(out_dir, f"FILTERED_celltype_subclass_{sample}_mouse_Slide-seq_umap_singlets.png"),
-#             dpi=300, bbox_inches='tight', pad_inches=0.1)
-# plt.close()
+top_types = type_counts.head(30).index.tolist()
+# Build legend elements using your label_to_hex
+legend_elements = [Patch(facecolor=label_to_hex.get(t, "#808080"), label=t) for t in top_types]
+sc.pl.umap(adata_filtered, color='RCTD_first_type_rat', palette=label_to_hex, show=True)
+plt.title(f"UMAP of singlets (n = {num_cells}) after RCTD mouse", fontsize=14)
+# Build custom legend for top 30 only
+plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1.02, 0.5), title="Subclasses present with min n_cells=10 at all samples", fontsize=7)
+plt.savefig(os.path.join(out_dir, f"FILTERED_celltype_subclass_{sample}_mouse_Slide-seq_umap_singlets.png"),
+            dpi=300, bbox_inches='tight', pad_inches=0.1)
+plt.close()
 
-# # -------------- INTERACTIVE UMAP --------------
-# umap_df = adata_filtered.obs.copy()
-# umap_df["UMAP1"] = adata_filtered.obsm["X_umap"][:, 0]
-# umap_df["UMAP2"] = adata_filtered.obsm["X_umap"][:, 1]
-# umap_df["label_number"] = umap_df["RCTD_first_type_rat"].str.split("_").str[0].astype(int)
-# ordered_labels = umap_df.groupby("RCTD_first_type_rat", observed=True)["label_number"].first().sort_values().index.tolist()
-# umap_df["RCTD_first_type_rat"] = pd.Categorical(umap_df["RCTD_first_type_rat"], categories=ordered_labels, ordered=True)
+# -------------- INTERACTIVE UMAP --------------
+umap_df = adata_filtered.obs.copy()
+umap_df["UMAP1"] = adata_filtered.obsm["X_umap"][:, 0]
+umap_df["UMAP2"] = adata_filtered.obsm["X_umap"][:, 1]
+umap_df["label_number"] = umap_df["RCTD_first_type_rat"].str.split("_").str[0].astype(int)
+ordered_labels = umap_df.groupby("RCTD_first_type_rat", observed=True)["label_number"].first().sort_values().index.tolist()
+umap_df["RCTD_first_type_rat"] = pd.Categorical(umap_df["RCTD_first_type_rat"], categories=ordered_labels, ordered=True)
 
-# umap_df = umap_df.sort_values("RCTD_first_type_rat")
-# umap_df.head()
+umap_df = umap_df.sort_values("RCTD_first_type_rat")
+umap_df.head()
 
-# fig = px.scatter(
-#         umap_df,
-#         x="UMAP1",
-#         y="UMAP2",
-#         color="RCTD_first_type_rat",
-#         color_discrete_map=label_to_hex,  # <-- use your palette
-#         hover_data={
-#             "RCTD_first_type_rat": True,
-#             "sample": True,
-#             "pregnancy": True,
-#             "treatment": True,
-#             "day": True,
-#             "coronal_section": True,
-#             "UMAP1": False,   # explicitly hide
-#             "UMAP2": False    # explicitly hide
-#         }
-#     )
-# fig.update_traces(marker=dict(size=2, opacity=0.8))
-# fig.update_layout(paper_bgcolor='white', plot_bgcolor='white', legend=go.layout.Legend(itemsizing='constant'))
-# fig_path = os.path.join(out_dir, "BrainCanada_Slide-seq_umap_interactive.html")
-# fig.write_html(fig_path)
+fig = px.scatter(
+        umap_df,
+        x="UMAP1",
+        y="UMAP2",
+        color=color_col,
+        color_discrete_map=label_to_hex,  # <-- use your palette
+        hover_data={
+            "RCTD_first_type_rat": True,
+            "RCTD_second_type_rat": True,
+            "RCTD_spot_class_rat": True,
+            "RCTD_singlet_score_rat": True,
+            "sample": True,
+            "pregnancy": True,
+            "treatment": True,
+            "day": True,
+            "coronal_section": True,
+            "UMAP1": False,   # explicitly hide
+            "UMAP2": False    # explicitly hide
+        }
+    )
+fig.update_traces(marker=dict(size=2, opacity=0.8))
+fig.update_layout(paper_bgcolor='white', plot_bgcolor='white', legend=go.layout.Legend(itemsizing='constant'))
+fig_path = os.path.join(out_dir, f"{color_col}_BrainCanada_Slide-seq_umap_interactive.html")
+fig.write_html(fig_path)
 
 
 # sc.pl.umap(adata_filtered, color='RCTD_first_type_rat', palette=label_to_hex, show=True)

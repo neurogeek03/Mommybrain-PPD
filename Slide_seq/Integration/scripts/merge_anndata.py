@@ -9,9 +9,11 @@ singlet_score_trheshold = 0
 
 # ========== PATHS ==========
 in_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/OUT/FINAL_RCTD_newgenelist/anndata_objects' #CHANGE
-out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist' #CHANGE
+out_dir = '/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects' #CHANGE
 metadata = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR/slide_seq_metadata.csv'
 os.makedirs(out_dir, exist_ok=True)
+
+out_file = os.path.join(out_dir,f'All_RCTD_types_singlet_score_{singlet_score_trheshold}_slide_seq_15.h5ad')
 
 # ========== READING IN METADATA ==========
 metadata_df = pd.read_csv(metadata)
@@ -34,10 +36,23 @@ for filename in os.listdir(in_dir):
     # Add metadata from metadata_df
     ad.obs = ad.obs.merge(metadata_df, on='sample', how='left')
 
-    # Filtering singlets only - OPTIONAL 
-    ad = ad[ad.obs["RCTD_spot_class_rat"] == "singlet"].copy()
+    # print('chekcing if rctd spot class is empty...')
+    # obs_col = ad.obs["RCTD_spot_class_rat"].isna().sum()
+    # print(f'found {obs_col} empty rows')
+    # print(f'out of total {ad.n_obs}')
 
-    # Filtering singlets score = 330
+    mask = ad.obs["RCTD_spot_class_rat"].notna() & (ad.obs["RCTD_spot_class_rat"] != "")
+
+    ad = ad[mask].copy()
+
+    print(f'{ad.n_obs} cells remaining, after ensuring all RCTD spot class rows are non-empty')
+
+    # Filtering singlets only - OPTIONAL 
+    ad = ad[ad.obs["RCTD_spot_class_rat"] != "reject"].copy()
+
+    print(f'{ad.n_obs} cells remaining')
+
+    # Filtering singlets score 
     ad = ad[ad.obs["RCTD_singlet_score_rat"] > singlet_score_trheshold].copy()
     adata_list.append(ad)
 
@@ -63,6 +78,7 @@ print(adata_all.obs["pregnancy"].map(type).value_counts())
 for col in ["pregnancy", "day", "treatment", "sample"]:
     adata_all.obs[col] = adata_all.obs[col].astype(str)
 
+print(f'number of cells in the merged object: {ad.n_obs}')
 
-adata_all.write(os.path.join(out_dir,f'NEW_genelist_singlet_score_{singlet_score_trheshold}_slide_seq_15.h5ad'))
-
+adata_all.write(out_file)
+print(f'saved adata obj at {out_file}')

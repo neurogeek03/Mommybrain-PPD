@@ -4,10 +4,8 @@ import os
 import pandas as pd
 # ========== CONFIG ==========
 # Paths
-# filename ='class_B03_with_RCTD_mouse.h5ad'
-# adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/anndata_objects/{filename}" 
-filename = 'NEW_genelist_singlet_score_0_slide_seq_15.h5ad'
-adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/{filename}"
+filename = 'All_RCTD_types_singlet_score_0_slide_seq_15.h5ad'
+adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
 out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/OUT"        
 os.makedirs(out_dir, exist_ok=True)
 
@@ -15,29 +13,43 @@ sample = filename.split('_')[1]
 
 meta_column = "RCTD_spot_class_rat"
 filter_column = "RCTD_singlet_score_rat"
-filter_value = 300
+filter_value = 0
 
 # sample = 'all_data'
 
 # Load harmonized AnnData
 adata_all = sc.read_h5ad(adata_path)
-adata_all = adata_all[adata_all.obs[meta_column] == "singlet"].copy()
-
-adata_all = adata_all[adata_all.obs[filter_column]>filter_value].copy()
+print(f'Number of cells: {adata_all.n_obs}')
+n_reject = (adata_all.obs[meta_column] == "reject").sum()
+print("Number of reject cells:", n_reject)
+adata_all = adata_all[adata_all.obs[meta_column] != "reject"].copy()
+n_unique = adata_all.obs[meta_column].nunique()
+print("Number of unique values:", n_unique)
+print(f'Number of cells: {adata_all.n_obs}')
+#adata_all = adata_all[adata_all.obs[filter_column]>filter_value].copy()
 
 # print(adata_all.obs["RCTD_second_type"].unique().tolist())
 print('starting computations')
-sc.pp.highly_variable_genes(adata_all, flavor='seurat_v3', n_top_genes=2000)
+sc.pp.filter_cells(adata_all, min_counts=100)   # sensible thresholds
+sc.pp.filter_genes(adata_all, min_cells=3)
 sc.pp.normalize_total(adata_all, target_sum=1e4)
 sc.pp.log1p(adata_all)
+sc.pp.highly_variable_genes(adata_all, flavor='seurat_v3', n_top_genes=2000)
+adata = adata_all[:, adata_all.var['highly_variable']]
+
 
 print('done with log normalization')
 sc.pp.scale(adata_all, max_value=10)
-sc.tl.pca(adata_all, svd_solver='arpack')
-sc.pp.neighbors(adata_all, n_neighbors=15, n_pcs=30)
+print('scaling done')
+# sc.tl.pca(adata_all, svd_solver='arpack')
+sc.tl.pca(adata_all, n_comps=50, svd_solver='randomized') 
+print('pca done')
+sc.pp.neighbors(adata_all, n_neighbors=10, n_pcs=30)
+print('neighbors done')
+#sc.pp.neighbors(adata, n_neighbors=15, n_pcs=50, method='pynndescent', n_jobs=16)
 sc.tl.umap(adata_all)
 print('done with umap!')
-adata_all.write(os.path.join(out_dir, f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/umap_filtered_{filter_value}_NEW_genelist_slide_seq_15.h5ad"))
+adata_all.write(os.path.join(out_dir, f"{adata_all.n_obs}_umap_filtered_{filter_value}_NEW_genelist_slide_seq_15.h5ad"))
 
 # GET COLORS
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
