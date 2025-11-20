@@ -23,4 +23,4 @@ print(f"Total genes in reference: {len(genes_ref)}")
 print(f"Total genes in query: {len(genes_query)}")
 print(f"Shared genes: {len(shared_genes)}")
 
-print('test')
+print('test2!')
