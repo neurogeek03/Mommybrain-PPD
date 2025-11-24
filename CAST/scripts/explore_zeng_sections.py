@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path 
 
 project_folder = Path.cwd() # always run from project folder 
-metadata_file = project_folder / 'data' / 'reference' / 'meta' / 'cell_metadata.csv'
+metadata_file = project_folder / 'data' / 'reference' / 'Xiaowei' / 'ABCA_1' / 'cell_metadata.csv'
 group_column = 'brain_section_label'
 color_column = 'cluster_alias'
 
