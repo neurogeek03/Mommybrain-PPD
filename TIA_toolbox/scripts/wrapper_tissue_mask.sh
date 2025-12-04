@@ -28,10 +28,10 @@ mkdir -p "$masks" "$anndata_filtered" "$plots" "$tia_input"
 # FIX: remove duplicated path; just loop inside INPUT_DIR
 for f in "$INPUT_DIR"/*; do
     echo "Processing: $f"
-    sample=$(basename "$file" | cut -d'_' -f1)
+    sample=$(basename "$f" | cut -d'_' -f1)
     echo "$sample"
 
-    source /scratch/miniforge3/etc/profile.d/conda.sh
+    # source /scratch/miniforge3/etc/profile.d/conda.sh
     conda activate anndata_env
     echo "Anndata environment activated!"
 
