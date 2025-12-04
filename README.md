@@ -28,3 +28,9 @@ apptainer pull edger.sif docker://chrisamiller/edger:4.4.2
 module load apptainer
 apptainer pull sccoda_tf.sif docker://ghcr.io/neurogeek03/sccoda:tf_fix
 ```
+
+### TIA-toolbox container (tissue segmentation in Slide-seq)
+```bash
+module load apptainer
+apptainer pull docker://ghcr.io/tissueimageanalytics/tiatoolbox:latest
+```
