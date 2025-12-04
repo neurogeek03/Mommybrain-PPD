@@ -31,6 +31,9 @@ ENV/
 env/
 .venv/
 
+# Apptainer 
+.sif 
+
 # IDEs
 .vscode/
 .idea/
