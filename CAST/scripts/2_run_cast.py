@@ -44,6 +44,10 @@ for key in coords_dict:
     coords_dict[key] = np.asarray(coords_dict[key])
     coords_dict[key] = coords_dict[key].reshape(-1, 2)
 
+coords_to_save = {k: torch.tensor(v) for k, v in coords_dict.items()}
+coords_file_path = output_base / "coords_dict.pt"
+torch.save(coords_to_save, coords_file_path)
+
 exp_dict = input_json["exp_dict"]
 
 samples = ["B01", "B42"]
