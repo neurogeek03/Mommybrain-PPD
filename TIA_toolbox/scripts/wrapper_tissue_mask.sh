@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # ===== ARGUMENTS =====
-ROOT="$1"   # first argument: input directory
-DEFAULT="/scratch/mfafouti/Mommybrain/TIA_toolbox"
+# ROOT="$1"                     # optional: input dir root
+#SAMPLE_ARG="$1"               # optional: specific sample ID
+RESOLUTION_TIA="$1"
+ROOT="/scratch/mfafouti/Mommybrain/TIA_toolbox"
 
-# Use provided input or default
-ROOT="${ROOT:-$DEFAULT}"     # FIX: ROOT_DIR → ROOT
 echo "Using ROOT: $ROOT"
 
 # ===== FIXED INPUT PATH =====
-INPUT_DIR="$ROOT/data/objects"      # FIX: use correct path
+INPUT_DIR="$ROOT/data/objects"
 echo "Using INPUT_DIR: $INPUT_DIR"
 
 # ===== PROMPT FOR RUN NAME =====
@@ -24,33 +24,67 @@ tia_input="$base_folder/tia_input"
 
 mkdir -p "$masks" "$anndata_filtered" "$plots" "$tia_input"
 
-# ===== Looping over all adata objects =====
-# FIX: remove duplicated path; just loop inside INPUT_DIR
-for f in "$INPUT_DIR"/*; do
+# ===== DETERMINE TARGET FILES =====
+if [[ -n "$SAMPLE_ARG" ]]; then
+    echo "Sample provided: $SAMPLE_ARG"
+    FILES=("$INPUT_DIR"/"$SAMPLE_ARG"*.h5ad)
+    if [[ ! -e "${FILES[0]}" ]]; then
+        echo "No files found for sample '$SAMPLE_ARG' in $INPUT_DIR"
+        exit 1
+    fi
+else
+    echo "No sample provided → processing all files"
+    FILES=("$INPUT_DIR"/*)
+fi
+
+# ===== MAIN LOOP =====
+for f in "${FILES[@]}"; do
     echo "Processing: $f"
     sample=$(basename "$f" | cut -d'_' -f1)
     echo "$sample"
 
-    # source /scratch/miniforge3/etc/profile.d/conda.sh
+    source /scratch/mfafouti/miniforge3/etc/profile.d/conda.sh
     conda activate anndata_env
     echo "Anndata environment activated!"
 
-    # ===== 1. Plot UMI colored plots =====
+    # ==========================================================
+    # 1. Plot UMI colored plots
+    # ==========================================================
     echo "Plotting UMI colored plots ..."
 
-    # FIX: test for empty merged directory; merge only if empty
-    if [ -z "$(ls -A "$tia_input" 2>/dev/null)" ]; then
-        python "$ROOT/scripts/plot_umi_brains.py" -s "$sample" -i "$f" -o "$tia_input" -p "$plots"
+    if ls "$tia_input"/"$sample"* 1>/dev/null 2>&1; then
+        echo "→ Skipping UMI plots: sample '$sample' already exists in $tia_input"
     else
-        echo "→ Skipping: merged metadata already exists in $tia_input"
+        python "$ROOT/scripts/plot_umi_brains.py" \
+            -s "$sample" \
+            -i "$f" \
+            -o "$tia_input" \
+            -p "$plots"
     fi
+
+    # ==========================================================
+    # 2. Run tissue segmentation & save plots + mask
+    # ==========================================================
+    module load apptainer/1.3.5
+    APPTAINER_IMG="/scratch/mfafouti/docker/tiatoolbox_latest.sif"
+
+    echo "Segmenting UMI-colored image for $sample ..."
+
+    if ls "$masks"/"$sample"* 1>/dev/null 2>&1; then
+        echo "→ Skipping segmentation: mask for '$sample' already exists in $masks"
+    else
+        apptainer exec "$APPTAINER_IMG" \
+            python "$ROOT/scripts/tissue_mask_slideseq.py" \
+                -s "$sample" \
+                -i "$tia_input" \
+                -o "$masks" \
+                -p "$plots" \
+                -res "$RESOLUTION_TIA"
+    fi
+
+    echo "Finished sample $sample"
+    echo "----------------------------------------"
 
 done
 
-    # ===== 2. Run tissue segmentation & save diagnostic plots + mask
-    # APPTAINER_IMG="/scratch/mfafouti/docker/tiatoolbox_latest.sif"
 
-    # apptainer exec "$APPTAINER_IMG" \
-    #     python cast_mark_run.py \
-    #     --input "$tia_input" \
-    #     --output "$OUTPUT_DIR"

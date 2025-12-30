@@ -37,7 +37,6 @@ def main():
     print(f"Reading: {adata_path}")
 
     # =================== PARAMS ===================
-    max_umi = 100
     dpi = 600
     pad = 500
     pad_color = 255
@@ -46,8 +45,14 @@ def main():
     adata = sc.read_h5ad(adata_path)
     sc.pp.calculate_qc_metrics(adata, inplace=True)
     coords = pd.DataFrame(adata.obsm["X_spatial"], columns=["x", "y"])
-    color_variable = "log10_numReads"
+    color_variable = "nCount_RNA"
 
+    # Calculate scale clipping maximum 
+    umi_per_cell = np.array(adata.X.sum(axis=1)).ravel()
+    median_umi = np.median(umi_per_cell)
+    print("Median UMI per cell:", median_umi)
+
+    max_umi = median_umi * 1.8
     # =================== UMI PLOT ===================
     coords[color_variable] = adata.obs[color_variable].values
     clipped_colors = np.clip(coords[color_variable], 0, max_umi)
@@ -99,7 +104,7 @@ def main():
         constant_values=pad_color
     )
 
-    padded_path = output_dir / f"{sample}_padded_{timestamp}.png"
+    padded_path = output_dir / f"{sample}_padded.png"
     Image.fromarray(padded).save(padded_path)
 
     print(f"Padded image saved at: {padded_path}")

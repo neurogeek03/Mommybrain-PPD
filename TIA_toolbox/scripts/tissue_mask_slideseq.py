@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import argparse
 
 import matplotlib as mpl
 import os
@@ -13,19 +14,42 @@ from tiatoolbox.tools.tissuemask import MorphologicalMasker
 from tiatoolbox.utils import imwrite
 from tiatoolbox.wsicore.wsireader import WSIReader
 
+# =========== Arg parser 
+parser = argparse.ArgumentParser(
+        description="Make UMI-colored spatial plots + padded frames"
+    )
+
+parser.add_argument("-s", "--sample", required=True,
+                        help="Sample name (e.g. B01)")
+parser.add_argument("-i", "--input", required=True,
+                        help="Path to input image for segmentation")
+parser.add_argument("-o", "--output", required=True,
+                        help="Directory to save mask numpy arrays")
+parser.add_argument("-p", "--plots", required=True,
+                        help="Directory where plots will be saved")
+parser.add_argument("-res", "--resolution", type=float, default=0.025,
+                        help="Resolution at which segmentation is performed")
+
+args = parser.parse_args()
+
+sample = args.sample
+input_dir = Path(args.input)
+output_dir= Path(args.output)
+plots_dir = Path(args.plots)
+
 stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 print(f'------ Script started at {stamp} ------')
 
 project_path = Path.cwd().parents[0]
-output_base = project_path / 'out'
-output_base.mkdir(exist_ok=True,parents=True)
-masks = output_base / "masks"
-masks.mkdir(exist_ok=True,parents=True)
+# output_base = project_path / 'out'
+# output_base.mkdir(exist_ok=True,parents=True)
+# masks = output_base / "masks"
+# masks.mkdir(exist_ok=True,parents=True)
 print(f'Current working dir  {project_path}')
 
 # PARAMS
-res = 0.7
-img_path = project_path / 'data' / 'log10_reads.png'
+res = args.resolution 
+img_path = input_dir / f'{sample}_padded.png'
 
 # importing own data in PNG format
 # see allowed formats at: https://github.com/TissueImageAnalytics/tiatoolbox/blob/master/tiatoolbox/wsicore/wsireader.py
@@ -41,7 +65,7 @@ print(*list(wsi_info.items()), sep="\n")  # noqa: T201
 wsi_thumb = wsi_object.slide_thumbnail(resolution=0.95, units="baseline")
 plt.imshow(wsi_thumb)
 plt.axis("off")
-thumbnail_path = output_base / "wsi_thumbnail_plot.png"
+thumbnail_path = plots_dir / "wsi_thumbnail_plot.png"
 plt.savefig(thumbnail_path, bbox_inches="tight", pad_inches=0)
 
 # create tissue mask 
@@ -76,15 +100,15 @@ def save_side_by_side(image_1: np.ndarray, image_2: np.ndarray, filepath: str) -
 # --- Example Usage ---
 
 # Assuming wsi_thumb and mask_thumb are your NumPy arrays
-mask_root = f"{res}_{stamp}"
-output_path = output_base / f"{mask_root}_side_by_side_comparison.png"
+mask_root = f"{sample}_mask"
+output_path = plots_dir / f"{mask_root}_side_by_side_comparison.png"
 save_side_by_side(wsi_thumb, mask_thumb, filepath=output_path)
 
 # saving array 
 mask_array = mask.img
 print(mask_array)
 print(mask_array.shape)
-mask_path = masks / mask_root
+mask_path = output_dir / mask_root
 np.save(mask_path, mask_array)
 
 print(f'mask array saved in {mask_path}')
