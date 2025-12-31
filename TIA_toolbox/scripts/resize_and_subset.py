@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -10,18 +11,34 @@ from skimage.transform import resize
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
 
-# Paths
+# =========== Arg parser ===========
+parser = argparse.ArgumentParser(
+        description="Resize mask array and subset adata object"
+    )
+
+parser.add_argument("-s", "--sample", required=True, help="Sample name (e.g. B01)")
+parser.add_argument("-i", "--input", required=True, help="Path to adata object")
+parser.add_argument("-m", "--masks", required=True, help="Path to mask folder")
+parser.add_argument("-o", "--output", required=True, help="Path to mask folder")
+
+args = parser.parse_args()
+sample = args.sample
+adata_path = Path(args.input)
+mask_dir = Path(args.masks)
+output_base = Path(args.output)
+
+# =========== Paths ===========
 project_path = Path.cwd().parents[0]
 print(f"current working directory: {project_path}")
-output_base = project_path / 'out'
-output_base.mkdir(exist_ok=True, parents=True)
+# output_base = project_path / 'out'
+# output_base.mkdir(exist_ok=True, parents=True)
 
-# adata
-obj_path = Path('/scratch/mfafouti/BANKSY/Banksy_py/data/query/B01_anndata.h5ad')
-adata = sc.read_h5ad(obj_path)
+# =========== adata ===========
+# obj_path = input_dir / f'{sample}_anndata.h5ad'
+adata = sc.read_h5ad(adata_path)
 
 # mask
-mask_array_path = output_base / 'masks'/ '0.025_20251203_204422.npy'
+mask_array_path = mask_dir / f'{sample}_mask.npy'
 mask_array = np.load(mask_array_path)
 print(mask_array)
 print(mask_array.shape)
@@ -113,24 +130,24 @@ filtered_y = ys[filtered_rows]
 filtered_barcodes = bead_barcodes[keep]
 print(f"Kept {len(filtered_barcodes)} / {adata.n_obs} beads inside tissue.")
 
-# =================== Plot to check ===================
-plt.figure(figsize=(9, 9))
+# # =================== Plot to check ===================
+# plt.figure(figsize=(9, 9))
 
-# All beads (background)
-plt.scatter(xs[cols], ys[rows], s=1, c="lightgray", label="All beads")
+# # All beads (background)
+# plt.scatter(xs[cols], ys[rows], s=1, c="lightgray", label="All beads")
 
-# Mask-kept beads
-plt.scatter(xs[cols[keep]], ys[rows[keep]], 
-            s=1, c="red", label="Inside mask")
+# # Mask-kept beads
+# plt.scatter(xs[cols[keep]], ys[rows[keep]], 
+#             s=1, c="red", label="Inside mask")
 
-plt.gca().invert_yaxis()    # spatial conventions
-plt.legend()
-plt.title("Mask sanity check on barcode grid")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.tight_layout()
-filtered_puck_path = output_base / 'filtered_puck.png'
-plt.savefig(filtered_puck_path)
+# plt.gca().invert_yaxis()    # spatial conventions
+# plt.legend()
+# plt.title("Mask sanity check on barcode grid")
+# plt.xlabel("x")
+# plt.ylabel("y")
+# plt.tight_layout()
+# filtered_puck_path = output_base / 'filtered_puck.png'
+# plt.savefig(filtered_puck_path)
 
 # =================== Subset adata ===================
 adata_filtered = adata[filtered_barcodes].copy()
@@ -149,5 +166,9 @@ plt.colorbar(label="log10_numReads")
 plt.title("Filtered beads")
 
 # 4. Save figure
-fig_path = output_base / f"B01_{adata_filtered.n_obs}_masked_spatial.png"
+fig_path = output_base / f"{sample}_{adata_filtered.n_obs}_masked_spatial.png"
 plt.savefig(fig_path, dpi=300)
+
+# 5. Save adata filtered
+adata_fil_path = output_base / f'{sample}_{adata_filtered.n_obs}_masked.h5ad'
+adata_filtered.write_h5ad(adata_fil_path)

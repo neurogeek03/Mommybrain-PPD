@@ -82,9 +82,22 @@ for f in "${FILES[@]}"; do
                 -res "$RESOLUTION_TIA"
     fi
 
+    # ==========================================================
+    # 3. Resize mask to fit the slide-seq puck & subset object
+    # ==========================================================
+    if ls "$anndata_filtered"/"$sample"* 1>/dev/null 2>&1; then
+        echo "→ Skipping object subsetting: sample '$sample' already exists in $anndata_filtered"
+    else
+        python "$ROOT/scripts/resize_and_subset.py" \
+            -s "$sample" \
+            -i "$f" \
+            -m "$masks" \
+            -o "$anndata_filtered"
+    fi
+
     echo "Finished sample $sample"
     echo "----------------------------------------"
-
+    
 done
 
-
+    
