@@ -2,8 +2,8 @@
 
 # ===== ARGUMENTS =====
 # ROOT="$1"                     # optional: input dir root
-#SAMPLE_ARG="$1"               # optional: specific sample ID
 RESOLUTION_TIA="$1"
+SAMPLE_ARG="$2"               # optional: specific sample ID
 ROOT="/scratch/mfafouti/Mommybrain/TIA_toolbox"
 
 echo "Using ROOT: $ROOT"

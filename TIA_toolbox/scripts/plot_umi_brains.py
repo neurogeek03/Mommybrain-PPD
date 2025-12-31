@@ -52,7 +52,7 @@ def main():
     median_umi = np.median(umi_per_cell)
     print("Median UMI per cell:", median_umi)
 
-    max_umi = median_umi * 1.8
+    max_umi = median_umi * 2.6 # for some samples I used 1.8 or 2.8, based on trial & error (manually inspect masks)
     # =================== UMI PLOT ===================
     coords[color_variable] = adata.obs[color_variable].values
     clipped_colors = np.clip(coords[color_variable], 0, max_umi)

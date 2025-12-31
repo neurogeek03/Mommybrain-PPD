@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import pandas as pd
 import scanpy as sc
+import seaborn as sns
 
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
@@ -61,7 +62,7 @@ plt.ylabel("log UMIs per cell")
 plt.title("UMI per-cell distribution across samples")
 
 plt.tight_layout()
-fig_path = output_base / f'{stamp}_umi_dist_allsamples.png'
+fig_path = output_base / f'violin_{stamp}_umi_dist_allsamples.png'
 plt.savefig(fig_path, dpi=300)
 
 # COLLECT DATA
