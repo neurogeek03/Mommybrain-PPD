@@ -164,12 +164,26 @@ missing = adata.obs_names.difference(bead_barcodes)
 print('Below is the number of beads that do not have spatial info:')
 print(len(missing))
 
-# # initialize everyone as false as some bead barcodes do not have spatial coords 
+# initialize everyone as false as some bead barcodes do not have spatial coords 
+print('===================================')
 # adata.obs["in_tissue_mask"] = False
 # mask_bool = np.isin(adata.obs_names, filtered_barcodes)
 # adata.obs['in_tissue_mask'] = mask_bool
-# # adata.obs.loc[bead_barcodes, "in_tissue_mask"] = keep
+# adata.obs.loc[bead_barcodes, "in_tissue_mask"] = keep
+# sanity check: these should match
+assert set(filtered_barcodes).issubset(set(adata.obs_names))
 
+# initialize: everyone is outside tissue
+adata.obs["in_tissue"] = False
+
+# mark kept barcodes as inside tissue
+adata.obs.loc[filtered_barcodes, "in_tissue"] = True
+print(adata.obs["in_tissue"].value_counts())
+
+
+print('Preview of adata file to saved:')
+print(adata)
+print('===================================')
 # adata_filtered = adata[adata.obs["in_tissue_mask"]].copy()
 
 # # Side-by side plot of unmasked vs masked 
@@ -205,8 +219,7 @@ print(len(missing))
 
 
 # # ======================
-adata_filtered = adata[filtered_barcodes].copy()
-adata_filtered.obsm["X_spatial"] = adata_filtered.obsm["X_spatial"].copy()
+
 
 # extract plot data 
 # x = adata_filtered.obsm["X_spatial"][:, 0]
@@ -222,6 +235,7 @@ adata_filtered.obsm["X_spatial"] = adata_filtered.obsm["X_spatial"].copy()
 
 # Combined plot 
 adata_filtered = adata[filtered_barcodes].copy()
+adata_filtered.obsm["X_spatial"] = adata_filtered.obsm["X_spatial"].copy()
 # ----------------- first plot -----------------
 title2 = 'Masked sample'
 

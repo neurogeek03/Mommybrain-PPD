@@ -24,6 +24,8 @@ def main():
                         help="Directory for downstream pipeline outputs")
     parser.add_argument("-p", "--plots", required=True,
                         help="Directory where plots will be saved")
+    parser.add_argument("-sc", "--scalar", required=True,
+                        help="scalar for umi plot")
 
     args = parser.parse_args()
 
@@ -31,6 +33,7 @@ def main():
     adata_path = Path(args.input)
     output_dir = Path(args.output)
     plots_dir = Path(args.plots)
+    scalar = args.scalar
 
     timestamp = datetime.now().strftime("%M%S%H_%Y%m%d")
     print(f"------ Plotting sample {sample} at {timestamp} ------")
@@ -52,7 +55,7 @@ def main():
     median_umi = np.median(umi_per_cell)
     print("Median UMI per cell:", median_umi)
 
-    max_umi = median_umi * 2.6 # for some samples I used 1.8 or 2.8, based on trial & error (manually inspect masks)
+    max_umi = median_umi * scalar # for some samples I used 1.8 or 2.8, based on trial & error (manually inspect masks)
     # =================== UMI PLOT ===================
     coords[color_variable] = adata.obs[color_variable].values
     clipped_colors = np.clip(coords[color_variable], 0, max_umi)

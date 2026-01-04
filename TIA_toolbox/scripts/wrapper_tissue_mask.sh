@@ -3,7 +3,8 @@
 # ===== ARGUMENTS =====
 # ROOT="$1"                     # optional: input dir root
 RESOLUTION_TIA="$1"
-SAMPLE_ARG="$2"               # optional: specific sample ID
+SCALAR="$2"
+SAMPLE_ARG="$3"               # optional: specific sample ID
 ROOT="/scratch/mfafouti/Mommybrain/TIA_toolbox"
 
 echo "Using ROOT: $ROOT"
@@ -18,7 +19,7 @@ base_folder="$ROOT/out/auto/$run_name"
 
 # Define subfolders
 masks="$base_folder/masks"
-anndata_filtered="$base_folder/filtered_objects"
+anndata_filtered="$base_folder/NEW_OBJECTS"
 plots="$base_folder/spatial_plots"
 tia_input="$base_folder/tia_input"
 
@@ -59,7 +60,8 @@ for f in "${FILES[@]}"; do
             -s "$sample" \
             -i "$f" \
             -o "$tia_input" \
-            -p "$plots"
+            -p "$plots" \
+            -sc "$SCALAR"
     fi
 
     # ==========================================================
