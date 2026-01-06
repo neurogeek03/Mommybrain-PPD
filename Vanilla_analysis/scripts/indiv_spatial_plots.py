@@ -19,32 +19,32 @@ adata_dir = args.input_dir
 output_dir = args.output_dir
 os.makedirs(output_dir, exist_ok=True)
 
-# GET COLORS
-color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
-color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
+# # GET COLORS
+# color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
+# color_df["name"] = color_df["name"].str.replace(r"[ /-]", "_", regex=True)
 
-# Create mapping from label number (prefix before _) to hex color
-def get_num_prefix(label):
-    try:
-        return int(str(label).split("_")[0])
-    except:
-        return -1
+# # Create mapping from label number (prefix before _) to hex color
+# def get_num_prefix(label):
+#     try:
+#         return int(str(label).split("_")[0])
+#     except:
+#         return -1
 
-color_df["num_prefix"] = color_df["name"].apply(get_num_prefix)
+# color_df["num_prefix"] = color_df["name"].apply(get_num_prefix)
 
-# Sort CSV by numeric prefix
-color_df = color_df.sort_values("num_prefix")
+# # Sort CSV by numeric prefix
+# color_df = color_df.sort_values("num_prefix")
 
-# Build dictionary mapping label to hex
-label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
+# # Build dictionary mapping label to hex
+# label_to_hex = dict(zip(color_df["name"], color_df["color_hex_triplet"]))
 
 #print(label_to_hex)
 print(adata_dir)
 # ========== GET FILES ==========
-h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith("_with_RCTD_mouse.h5ad")])
+h5ad_files = sorted([f for f in os.listdir(adata_dir) if f.endswith(".h5ad")])
 # h5ad_files = ["B37_with_RCTD_mouse.h5ad"]
 spot_class_column = "RCTD_spot_class_rat"
-type_column = "RCTD_first_type_rat"
+type_column = "leiden"
 print(f"Found {len(h5ad_files)} h5ad files")
 
 for h5ad_file in h5ad_files:
@@ -54,22 +54,22 @@ for h5ad_file in h5ad_files:
     # adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/ratified_ref_anndata_objects"
     adata = sc.read_h5ad(os.path.join(adata_dir, h5ad_file))
 
-    if spot_class_column not in adata.obs.columns:
-        print(f"⚠️ Skipping {sample}: no RCTD_spot_class_rat")
-        continue
+    # if spot_class_column not in adata.obs.columns:
+    #     print(f"⚠️ Skipping {sample}: no RCTD_spot_class_rat")
+    #     continue
 
-    singlets = adata[adata.obs[spot_class_column] == "singlet"].copy()
-    if singlets.shape[0] == 0:
-        print(f"⚠️ Skipping {sample}: no singlet spots")
-        continue
+    # singlets = adata[adata.obs[spot_class_column] == "singlet"].copy()
+    # if singlets.shape[0] == 0:
+    #     print(f"⚠️ Skipping {sample}: no singlet spots")
+    #     continue
 
-    if type_column not in singlets.obs.columns or "X_spatial" not in singlets.obsm:
+    if type_column not in adata.obs.columns or "X_spatial" not in adata.obsm:
         print(f"⚠️ Skipping {sample}: missing data")
         continue
 
-    coords = singlets.obsm["X_spatial"]
-    df = pd.DataFrame(coords, columns=["x", "y"], index=singlets.obs_names)
-    second_type_df = singlets.obs[[type_column]].copy()
+    coords = adata.obsm["X_spatial"]
+    df = pd.DataFrame(coords, columns=["x", "y"], index=adata.obs_names)
+    second_type_df = adata.obs[[type_column]].copy()
     
     merged_df = df.join(second_type_df, how='left')
 
@@ -112,16 +112,16 @@ for h5ad_file in h5ad_files:
         ordered=True
     )
 
-    # -----------------------
-    # Build palette using CSV
-    # -----------------------
-    palette = {}
-    for ct in ordered_celltypes:
-        if ct == "Other":
-            palette[ct] = "lightgrey"
-        else:
-            # fallback if celltype not found in CSV
-            palette[ct] = label_to_hex.get(ct, "#000000")
+    # # -----------------------
+    # # Build palette using CSV
+    # # -----------------------
+    # palette = {}
+    # for ct in ordered_celltypes:
+    #     if ct == "Other":
+    #         palette[ct] = "lightgrey"
+    #     else:
+    #         # fallback if celltype not found in CSV
+    #         palette[ct] = label_to_hex.get(ct, "#000000")
 
     # ========== INDIVIDUAL PLOT ==========
     plt.figure(figsize=(12, 8))
@@ -135,8 +135,7 @@ for h5ad_file in h5ad_files:
         data=merged_df,
         s=4,
         alpha=0.8,
-        linewidth=0,
-        palette=palette
+        linewidth=0
     )
 
     ax.set_title(f"{sample} ({len(merged_df)} singlets, top 30 + Other)", fontsize=14)
