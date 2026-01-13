@@ -1,13 +1,22 @@
 import os
 import anndata as ad
 import pandas as pd
+from pathlib import Path
+from datetime import datetime
+
+stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
+print(f"------ Script started at {stamp} ------")
+
+# =================== PARAMS ===================
+sample ='B01'
 
 # === Configuration ===
-project_folder = "/scratch/mfafouti/Mommybrain/Slide_tags/Gene_lists"
-h5ad_dir = "/project/rrg-shreejoy/MommyBrain/Slide_tags/Pipeline_data/objects/post_bender"           # change this
-ortholog_csv = "/project/rrg-shreejoy/MommyBrain/1-1_rat_to_mouse_filtered.csv"    # change this
-output_dir = os.path.join(project_folder, "UPDATED_adata_with_mouse_orthologs")
-os.makedirs(output_dir, exist_ok=True)
+project_path = Path.cwd().parents[0]
+subfolder = project_path / 'slideseq_test'
+output_base = subfolder / 'out'
+h5ad_dir = subfolder / 'raw' 
+ortholog_csv = project_path / 'rat_to_mouse_filtered.csv'
+output_dir = output_base / 'add_mouse_orthologs'
 
 # === Load mapping: rat_gene_id -> mouse_gene_stable_ID ===
 ortholog_df = pd.read_csv(ortholog_csv)

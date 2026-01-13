@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
+import distinctipy 
 import argparse
 
 # ========== ARGS ==========

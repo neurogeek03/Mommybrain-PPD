@@ -18,10 +18,9 @@ from anndata import AnnData
 import scanpy as sc
 
 # ========== Paths ==========
-project_path = "/scratch/mfafouti/Mommybrain/Slide_tags/Gene_lists"
-adata_dir = os.path.join(project_path, "UPDATED_adata_with_mouse_orthologs")
-out_dir = os.path.join(project_path, "UPDATED_collapsed_adata_with_mouse_orthologs")
-os.makedirs(out_dir, exist_ok=True)
+project_path = "/scratch/mfafouti/Mommybrain/Slide_tags/Gene_lists/slideseq_test"
+adata_dir = os.path.join(project_path, 'out', 'add_mouse_orthologs')
+out_dir = os.path.join(project_path, 'out', "collapse_to_mouse_genes")
 
 # ========== Function ==========
 def filter_1to1_mouse_orthologs(adata, mouse_id_col="mouse_gene_stable_ID"):

@@ -7,7 +7,7 @@ import plotly.express as px
 from adjustText import adjust_text
 
 # ============ params ============
-comparison_folder = 'caudal_cort_vs_non_cort'
+comparison_folder = 'rostral_cort_vs_non_cort'
 comparison = 'condition[T.NONE]'
 
 credible_thresh = 0.95
@@ -16,7 +16,7 @@ threshold = 0.007 # threshold to show labels on pie chart
 # ============ paths ============
 project_path = Path.cwd()
 out_dir = project_path / 'out'/'slide_seq' /comparison_folder
-figs = out_dir / 'figures' / 'coronal_section'
+figs = out_dir / 'figures' 
 figs.mkdir(exist_ok=True, parents=True)
 
 effects_path = out_dir / "sccoda_effects.csv"

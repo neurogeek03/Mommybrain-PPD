@@ -15,7 +15,7 @@ import re
 # === Input & output paths ===
 current_path = '/scratch/mfafouti/Mommybrain/Slide_seq/EdgeR'
 adata_path = '/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects'
-input_file = os.path.join(adata_path,  "RAW_adata_filtered_220626_10_in_any_2_samples.h5ad")
+input_file = os.path.join(adata_path,  "All_RCTD_types_singlet_score_0_slide_seq_15.h5ad")
 output_dir = os.path.join(current_path,"out","pseudobulk_outputs")
 os.makedirs(output_dir, exist_ok=True)
 

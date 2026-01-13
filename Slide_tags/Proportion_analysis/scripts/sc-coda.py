@@ -8,14 +8,14 @@ from sccoda.util import comp_ana as mod
 from sccoda.util import data_visualization as viz
 
 # params 
-comparison_folder = 'caudal_cort_vs_non_cort' # change name of folder at each iteration
+comparison_folder = 'rostral_cort_vs_non_cort' # change name of folder at each iteration
 pd.set_option('display.max_columns', None)
 
 # ============== paths ==============
 project_path = Path.cwd()
 data_dir = project_path / 'data' 
 data_path = data_dir / 'cell_counts_per_type_1M_slide_seq.csv'
-cov_path = data_dir / 'covariates_caudal.csv'
+cov_path = data_dir / 'covariates_rostral.csv'
 out_dir = project_path / 'out' / 'slide_seq' / comparison_folder
 out_dir.mkdir(exist_ok=True, parents=True)
 

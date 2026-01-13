@@ -17,8 +17,8 @@ parser.add_argument("-o", "--output_dir", help="Path to output folder for the fi
 args = parser.parse_args()
 
 filter_column = "RCTD_singlet_score_rat"
-filter_value = 330
-color = "RCTD_first_type_rat"
+filter_value = 0
+color = "RCTD_singlet_score_rat"
 
 # ========== PATHS ==========
 # adata_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/RCTD/new_RCTD_run/ratified_ref_anndata_objects"
@@ -85,7 +85,7 @@ for h5ad_file in h5ad_files:
 
     coords = singlets.obsm["X_spatial"]
     df = pd.DataFrame(coords, columns=["x", "y"], index=singlets.obs_names)
-    second_type_df = singlets.obs[[type_column, spot_class_column]].copy()
+    second_type_df = singlets.obs[[type_column, spot_class_column, color]].copy()
     
     merged_df = df.join(second_type_df, how='left')
 
@@ -155,7 +155,7 @@ for h5ad_file in h5ad_files:
     merged_df_sorted,
     x="x",
     y="y",
-    color=type_column,
+    color=color,
     color_discrete_map=label_to_hex,  # same palette dict you used
     hover_data={
             "RCTD_first_type_rat": True,
@@ -186,7 +186,7 @@ for h5ad_file in h5ad_files:
     fig.update_layout(paper_bgcolor='white', plot_bgcolor='white', legend=go.layout.Legend(itemsizing='constant'))
 
 
-    fig_path = os.path.join(output_dir, f"{type_column}_{sample}_filtered_spatial_RCTD.html")
+    fig_path = os.path.join(output_dir, f"full_no_rej_{color}_{sample}_filtered_spatial_RCTD.html")
     fig.write_html(fig_path)
 
 
