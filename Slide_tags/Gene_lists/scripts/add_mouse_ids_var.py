@@ -8,15 +8,17 @@ stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
 
 # =================== PARAMS ===================
-sample ='B01'
+sample ='PCT'
 
 # === Configuration ===
 project_path = Path.cwd().parents[0]
-subfolder = project_path / 'slideseq_test'
+# subfolder = project_path / 'slideseq_test'
+subfolder = Path('/scratch/mfafouti/Mommybrain/Slide_tags/Neuronchat')
 output_base = subfolder / 'out'
-h5ad_dir = subfolder / 'raw' 
+h5ad_dir = subfolder / 'data' 
 ortholog_csv = project_path / 'rat_to_mouse_filtered.csv'
 output_dir = output_base / 'add_mouse_orthologs'
+output_dir.mkdir(exist_ok=True, parents=True)
 
 # === Load mapping: rat_gene_id -> mouse_gene_stable_ID ===
 ortholog_df = pd.read_csv(ortholog_csv)
