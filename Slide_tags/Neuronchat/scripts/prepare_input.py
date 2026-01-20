@@ -3,6 +3,8 @@ from datetime import datetime
 from pathlib import Path
 import pandas as pd
 import scanpy as sc
+from scipy.sparse import issparse
+import numpy as np
 
 
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
@@ -16,7 +18,7 @@ output_base.mkdir(exist_ok=True, parents=True)
 
 # Custom paths
 data_dir = project_path / 'data' 
-slide_tags_merged = data_dir / 'add_mouse_orthologs' / 'PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad'
+slide_tags_merged = data_dir / 'add_mouse_orthologs' / 'MT_removed_merged_filtered_129493_mincells_10_in_2_samples_slide_tags.h5ad'
 rat_to_mouse_list = Path('/scratch/mfafouti/Mommybrain/Slide_tags/Gene_lists/rat_to_mouse_filtered.csv')
 
 # =================== PARAMS ===================
@@ -41,7 +43,6 @@ columns_to_remove = [
    'gene_symbols'
    ]
 
-
 existing_columns_to_drop = [col for col in columns_to_remove if 
                             col in adata_all.var.columns]
 adata_all.var.drop(columns=existing_columns_to_drop, inplace=True)
@@ -55,7 +56,20 @@ print(adata_all)
 print('Object AFTER collapsing - var names are mouse gene ids:')
 print(collapsed_adata_all)
 
-collapsed_path = data_dir / 'collapsed_PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad'
+# =================== NORMALIZATION ===================
+print('checking if there are any negative values...')
+contains_negative = collapsed_adata_all.X.min() < 0
+print(contains_negative)
+print('normalizing..')
+collapsed_adata_all
+sc.pp.normalize_total(collapsed_adata_all, target_sum=1e4)
+print('=====================================')
+print('checking if there are any negative values...')
+contains_negative = collapsed_adata_all.X.min() < 0
+print(contains_negative)
+print(collapsed_adata_all.X[:5, :5].toarray())
+# =================== SAVE LARGE OBJECT ===================
+collapsed_path = data_dir / 'collapsed_MT_removed_merged_filtered_129493_mincells_10_in_2_samples_slide_tags.h5ad'
 collapsed_adata_all.write(collapsed_path)
 
 # =================== SUBSET TO 1 SAMPLE ===================
@@ -64,49 +78,35 @@ print(adata_subset)
 
 # =================== DATA VALIDATION ===================
 print("\n--- Starting Data Validation ---")
+
+# Filter out genes with no symbol before validation
+adata_subset = adata_subset[:, ~adata_subset.var['gene_symbol'].isnull()].copy()
+print(f"  - Removed genes with no symbol. New shape: {adata_subset.shape}")
+
+# Replace the index (ENSEMBL IDs) with gene symbols
+adata_subset.var.index = adata_subset.var['gene_symbol'].astype(str)
+print("  - Replaced index with gene symbols.")
+
+# Ensure gene symbols are unique, appending numbers if necessary
+adata_subset.var_names_make_unique()
+print("  - Ensured gene names are unique.")
+print("  - Preview of new .var (first 5):")
+print(adata_subset.var.head())
 # Temporarily create DataFrames for validation
 validation_expr_df = adata_subset.to_df()
 validation_meta_df = adata_subset.obs
 
-# 1. Verify metadata columns ('df_group' equivalent)
-print("\n[1] Verifying metadata columns...")
-required_meta_cols = ['class_label', 'subclass_label']
-for col in required_meta_cols:
-    if col in validation_meta_df.columns:
-        print(f"  - Column '{col}' found. Unique values: {validation_meta_df[col].unique().tolist()}")
-    else:
-        print(f"  - WARNING: Column '{col}' NOT FOUND in metadata.")
-
-# 2. Check for NA/NaN values
-print("\n[2] Checking for NA/NaN values...")
-if validation_expr_df.isnull().values.any():
-    print("  - WARNING: NA/NaN values found in the expression data.")
-else:
-    print("  - OK: No NA/NaN values found in the expression data.")
-
-if validation_meta_df.isnull().values.any():
-    print("  - WARNING: NA/NaN values found in the metadata.")
-else:
-    print("  - OK: No NA/NaN values found in the metadata.")
-
-# 3. Check for all-zero rows/columns in expression data
-print("\n[3] Checking for all-zero rows/columns in expression data...")
-# Note: This check is on the dense DataFrame, which can be memory intensive for large data
-all_zero_rows = validation_expr_df.eq(0).all(axis=1).sum()
-all_zero_cols = validation_expr_df.eq(0).all(axis=0).sum()
-print(f"  - Found {all_zero_rows} rows (cells) that are all zeros.")
-print(f"  - Found {all_zero_cols} columns (genes) that are all zeros.")
-print("--- Data Validation Complete ---\n")
-
 # =================== OUTPUT ===================
 expression_df = adata_subset.to_df()
+transposed_expression_df = expression_df.T
+
 # adding the cell subclass label as the last column
 expression_df['cell_subclass'] = adata_subset.obs['subclass_name']
 metadata_df = adata_subset.obs
 
-# =================== Saving ===================
-csv_path = output_base / f"{sample}_expression_matrix_cell_subclass.csv"
+# # =================== Saving ===================
+csv_path = output_base / f"pos_{sample}_expression_matrix_cell_subclass.csv"
 # index=True saves cell IDs as the first column
 expression_df.to_csv(csv_path, index=True) 
-meta_path = output_base / f"{sample}_metadata.csv"
+meta_path = output_base / f"pos_{sample}_metadata.csv"
 metadata_df.to_csv(meta_path, index=True)

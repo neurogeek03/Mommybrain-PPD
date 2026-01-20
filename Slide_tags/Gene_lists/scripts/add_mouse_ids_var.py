@@ -8,14 +8,14 @@ stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
 
 # =================== PARAMS ===================
-sample ='PCT'
+sample ='MT'
 
 # === Configuration ===
 project_path = Path.cwd().parents[0]
 # subfolder = project_path / 'slideseq_test'
 subfolder = Path('/scratch/mfafouti/Mommybrain/Slide_tags/Neuronchat')
 output_base = subfolder / 'out'
-h5ad_dir = subfolder / 'data' 
+h5ad_dir = subfolder / 'data' / 'raw'
 ortholog_csv = project_path / 'rat_to_mouse_filtered.csv'
 output_dir = output_base / 'add_mouse_orthologs'
 output_dir.mkdir(exist_ok=True, parents=True)
