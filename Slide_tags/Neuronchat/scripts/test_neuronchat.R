@@ -10,24 +10,34 @@ library(NeuronChat)
 library(CellChat)
 library(glue)
 library(parallel)
-library(optparse)
 
 print('Libraries loaded!')
 
 # ================ ARGS ================
-option_list <- list(
-    make_option(c("-d", "--data_dir"), type="character",
-                help="Directory containing the input data", metavar="character"),
-    make_option(c("-s", "--sample"), type="character",
-                help="sample id", metavar="character")
-)
+args <- commandArgs(trailingOnly = TRUE)
 
-opt_parser <- OptionParser(option_list=option_list)
-opt <- parse_args(opt_parser)
+data_dir <- NULL
+sample <- NULL
+
+i <- 1
+while (i <= length(args)) {
+    if (args[i] == "--data_dir" && i + 1 <= length(args)) {
+        data_dir <- args[i + 1]
+        i <- i + 2
+    } else if (args[i] == "--sample" && i + 1 <= length(args)) {
+        sample <- args[i + 1]
+        i <- i + 2
+    } else {
+        i <- i + 1
+    }
+}
+
+if (is.null(data_dir) || is.null(sample)) {
+    stop("Both --data_dir and --sample arguments must be supplied. Usage: Rscript test_neuronchat.R --data_dir <path> --sample <id>", call. = FALSE)
+}
 
 # ================ INPUT ================
-data_dir <- opt$data_dir
-matrix_path <- file.path(data_dir, glue("{sample}_expression_matrix_cell_subclass.csv")
+matrix_path <- file.path(data_dir, glue("{sample}_expression_matrix_cell_subclass.csv"))
 meta_path <- file.path(data_dir,  glue("{sample}_metadata.csv"))
 
 # ================ PARAMS ================
