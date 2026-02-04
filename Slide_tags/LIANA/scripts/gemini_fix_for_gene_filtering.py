@@ -16,7 +16,7 @@ from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
 
 # Custom functions
-from functions import collapse_by_gene_symbol, print_filter_debug_info, preview_X
+from functions import collapse_by_gene_symbol, print_filter_debug_info
 
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
@@ -98,6 +98,10 @@ plot_path = figs_dir / 'filtered_samples.png'
 dc_path_1 = str(plot_path)
 dc.pl.filter_samples(pdata, groupby=[sample_key, groupby], figsize=(11, 4), save=dc_path_1)
 
+# Save pdata.X as a CSV
+ctdata_df = pd.DataFrame(ctdata.X, index=ctdata.obs_names, columns=ctdata.var_names)
+ctdata_df.to_csv(output_base / 'ctdata_matrix.csv')
+
 
 # =================== DE ===================
 dea_results = {}
@@ -109,8 +113,6 @@ for cell_group in pdata.obs[groupby].unique():
 
     # Add this debug statement
     if cell_group == "318 Astro-NT NN":
-        deb_path = output_base / 'ctdata_318_astro.h5ad'
-        ctdata.write(deb_path)
         print(f"DEBUG: For '{cell_group}', ctdata has {ctdata.n_obs} observations (samples) after sample filtering.")
         if ctdata.n_obs == 0:
             print(f"DEBUG: ctdata is empty for '{cell_group}'. This is likely why no genes pass the filter.")
@@ -120,27 +122,36 @@ for cell_group in pdata.obs[groupby].unique():
     df_preview = pd.DataFrame(data=matrix_subset,index=ctdata.obs_names[:10],columns=ctdata.var_names[:10])
     print(df_preview)
 
-    # # Obtain genes that pass the edgeR-like thresholds
-    # # NOTE: QC thresholds might differ between cell types, consider applying them by cell type
-    # genes = dc.pp.filter_by_expr(ctdata,
-    #                           group=condition_key,
-    #                           min_count=1, # a minimum number of counts in a number of samples
-    #                           min_total_count=1, # a minimum total number of reads across samples
-    #                           large_n=2, 
-    #                           min_prop=0.5
-    #                           )
+    # Obtain genes that pass the edgeR-like thresholds
+    # NOTE: QC thresholds might differ between cell types, consider applying them by cell type
+    genes = dc.pp.filter_by_expr(ctdata,
+                              group=condition_key,
+                              min_count=0, # a minimum number of counts in a number of samples
+                              min_total_count=0, # a minimum total number of reads across samples
+                              large_n=3, 
+                              min_prop=0.5
+                              )
+    
+        # Add debug statements to inspect the 'genes' mask and resulting ctdata after filtering
+    if cell_group == "318 Astro-NT NN":
+        if genes is not None and genes.any():
+            temp_filtered_ctdata = ctdata[:, genes].copy()
+            print(f"DEBUG: For '{cell_group}', the gene filtering step returned {temp_filtered_ctdata.n_vars} genes.")
+            if temp_filtered_ctdata.n_vars > 0:
+                print(f"DEBUG: Preview of filtered ctdata.X for '{cell_group}' (first 5x5):")
+                matrix_to_print = temp_filtered_ctdata.X
+                if hasattr(matrix_to_print, 'toarray'): # Check if sparse and convert
+                    matrix_to_print = matrix_to_print.toarray()
+                
+                df_to_print = pd.DataFrame(
+                    matrix_to_print[:min(5, temp_filtered_ctdata.n_obs), :min(5, temp_filtered_ctdata.n_vars)],
+                    index=temp_filtered_ctdata.obs_names[:min(5, temp_filtered_ctdata.n_obs)],
+                    columns=temp_filtered_ctdata.var_names[:min(5, temp_filtered_ctdata.n_vars)]
+                )
+                print(df_to_print)
+        else:
+            print(f"DEBUG: For '{cell_group}', the gene filtering step returned 0 genes or a None mask.")
 
-    
-    # Manually filter genes since library functions are failing.
-    # Keep genes that are expressed in at least 3 samples.
-    if hasattr(ctdata.X, 'toarray'):
-        expression_matrix = ctdata.X.toarray()
-    else:
-        expression_matrix = ctdata.X
-        n_samples_expressed = np.count_nonzero(expression_matrix, axis=0)
-        genes = n_samples_expressed >= 3
-    
-    # ctdata_filtered_genes = sc.pp.filter_genes(ctdata, min_cells=3)
 
     # Filter by these genes
     if genes is None or not genes.any():
@@ -149,15 +160,12 @@ for cell_group in pdata.obs[groupby].unique():
 
     ctdata = ctdata[:, genes].copy()
     
-    # Set 'OIL' as the reference level for the 'group' condition
-
-    ctdata.obs[condition_key] = pd.Categorical(ctdata.obs[condition_key], categories=['OIL', 'CORT'])
-
-    # Build DESeq2 object using the modern formulaic design
+    # Build DESeq2 object
     # NOTE: this data is actually paired, so one could consider fitting the patient label as a confounder
     dds = DeseqDataSet(
         adata=ctdata,
-        design=f'~ {condition_key}',
+        design_factors=condition_key,
+        ref_level=[condition_key, 'OIL'], # set control as reference
         refit_cooks=True,
         quiet=quiet
     )
@@ -170,7 +178,7 @@ for cell_group in pdata.obs[groupby].unique():
     # Compute Wald test
     stat_res.summary()
     # Shrink LFCs
-    stat_res.lfc_shrink(coeff='group[T.CORT]')
+    stat_res.lfc_shrink(coeff='condition_stim_vs_ctrl') # {condition_key}_cond_vs_ref
     
     dea_results[cell_group] = stat_res.results_df
 

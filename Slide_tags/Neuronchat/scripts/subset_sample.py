@@ -5,6 +5,7 @@ import scanpy as sc
 from scipy.sparse import issparse
 import numpy as np
 import argparse 
+from functions import find_file_by_parts
 
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
@@ -31,10 +32,12 @@ output_base = Path(args.output_base)
 output_base.mkdir(exist_ok=True, parents=True)
 
 #FIXME change this relative to argparse
-merged_samples_path = input_dir / 'collapsed_MT_removed_merged_filtered_129493_mincells_10_in_2_samples_slide_tags.h5ad'
+files_matching = find_file_by_parts(input_dir, "collapsed", ".h5ad")
+adata_path = files_matching[0]
+# merged_samples_path = input_dir / 'collapsed_MT_removed_merged_filtered_129493_mincells_10_in_2_samples_slide_tags.h5ad'
 
 # =================== INPUT ===================
-collapsed_adata_all = sc.read_h5ad(merged_samples_path)
+collapsed_adata_all = sc.read_h5ad(adata_path)
 
 # =================== SUBSET TO 1 SAMPLE ===================
 adata_subset = collapsed_adata_all[collapsed_adata_all.obs['sample'] == sample].copy()

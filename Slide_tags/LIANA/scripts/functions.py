@@ -1,6 +1,6 @@
-import anndata
+from anndata import AnnData
 import pandas as pd
-import adata as ad
+import numpy as np
 import scipy.sparse as sp
 from scipy.sparse import issparse
 
@@ -64,3 +64,109 @@ def collapse_by_gene_symbol(adata, gene_symbol_col="gene_symbols", aggfunc="sum"
     collapsed_adata.var_names = collapsed_df.columns
 
     return collapsed_adata
+
+def print_filter_debug_info(ctdata: AnnData, cell_group: str, condition_key: str):
+    """
+    Prints debugging information for the ctdata object before filtering.
+
+    Parameters:
+    -----------
+    ctdata : anndata.AnnData
+        The AnnData object for the current cell group.
+    cell_group : str
+        The name of the current cell group.
+    condition_key : str
+        The key for the condition in ctdata.obs (e.g., 'group').
+    """
+    print(f"\n--- Debugging for cell group: {cell_group} ---")
+    print("ctdata object:")
+    print(ctdata)
+    print("\nctdata.obs:")
+    print(ctdata.obs)
+    print(f"\nValue counts for '{condition_key}' column:")
+    print(ctdata.obs[condition_key].value_counts())
+    print("\nData type of the matrix:")
+    print(ctdata.X.dtype)
+
+    gene_to_check = '6330411D24Rik'
+    if gene_to_check in ctdata.var_names:
+        print(f"\nCounts for gene '{gene_to_check}':")
+        gene_idx = ctdata.var_names.get_loc(gene_to_check)
+        # Handle sparse vs dense for printing
+        if hasattr(ctdata.X, 'toarray'):
+            print(ctdata.X[:, gene_idx].toarray().flatten())
+        else:
+            print(ctdata.X[:, gene_idx])
+    else:
+        print(f"\nGene '{gene_to_check}' not found in this ctdata. Current var_names: {ctdata.var_names[:5].tolist()}...")
+    print("--- End of debug block ---")
+
+def preview_X(matrix_like, n_rows=5, n_cols=5, row_labels=None, col_labels=None, title="Matrix Preview"):
+    """
+    Generates a formatted string preview of a matrix-like object
+    (e.g., numpy array, scipy sparse matrix, AnnData.X).
+
+    Parameters:
+    -----------
+    matrix_like : np.ndarray, sp.spmatrix, or AnnData.X
+        The matrix or matrix-like object to preview.
+    n_rows : int
+        Number of rows to display in the preview.
+    n_cols : int
+        Number of columns to display in the preview.
+    row_labels : list-like, optional
+        Labels for the rows (e.g., obs_names).
+    col_labels : list-like, optional
+        Labels for the columns (e.g., var_names).
+    title : str
+        Title for the preview.
+
+    Returns:
+    --------
+    str
+        A formatted string representation of the matrix preview.
+    """
+
+    if matrix_like is None:
+        return f"{title}:\n    (Matrix is None)"
+
+    original_shape = getattr(matrix_like, "shape", (0, 0))
+    if original_shape == (0, 0):
+        return f"{title}:\n    (Matrix is empty)"
+
+    # Handle sparse matrices
+    if issparse(matrix_like):
+        matrix_dense = matrix_like.toarray()
+    else:
+        matrix_dense = matrix_like
+
+    # Get subset for preview
+    preview_matrix = matrix_dense[
+        :min(n_rows, original_shape[0]),
+        :min(n_cols, original_shape[1])
+    ]
+
+    # Get labels
+    preview_row_labels = (
+        row_labels[:min(n_rows, original_shape[0])]
+        if row_labels is not None
+        else [f"row_{i}" for i in range(preview_matrix.shape[0])]
+    )
+
+    preview_col_labels = (
+        col_labels[:min(n_cols, original_shape[1])]
+        if col_labels is not None
+        else [f"col_{i}" for i in range(preview_matrix.shape[1])]
+    )
+
+    df_preview = pd.DataFrame(
+        preview_matrix,
+        index=preview_row_labels,
+        columns=preview_col_labels
+    )
+
+    header = f"--- {title} (Shape: {original_shape}) ---"
+    footer = "----------------------------------"
+
+    return f"{header}\n{df_preview.to_string()}\n{footer}"
+

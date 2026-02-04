@@ -61,9 +61,9 @@ df_group <- meta_data[!duplicated(meta_data$subclass_label), c(class_column, sub
 group <- structure(df_group$class_name, names=df_group$subclass_name)
 # group <- structure(df_group$class_label,names=df_group$subclass_label)
 
-# ================ Create object & run ================
-x <- createNeuronChat(t(as.matrix(expr_matrix[,1:(dim(expr_matrix)[2]-1)])),DB='mouse',group.by = expr_matrix$cell_subclass);
-saveRDS(x, file = x_rds_filepath)
+# # ================ Create object & run ================
+# x <- createNeuronChat(t(as.matrix(expr_matrix[,1:(dim(expr_matrix)[2]-1)])),DB='mouse',group.by = expr_matrix$cell_subclass);
+# saveRDS(x, file = x_rds_filepath)
 
 # ================ Data loading ================
 expr_df <- read.csv(matrix_path, row.names = 1, check.names = FALSE)
@@ -88,7 +88,12 @@ df_group <- meta_data[!duplicated(meta_data$subclass_label), c(class_column, sub
 group <- structure(df_group$class_label,names=df_group$subclass_label)
 
 # ================ Create object & run ================
-x <- createNeuronChat(expr_matrix_t, DB='mouse', group.by = cell_subclass_labels);
+x <- createNeuronChat(expr_matrix_t, meta=meta_data, DB='mouse', group.by = cell_subclass_labels);
+print("Running main NeuronChat analysis (this may take a while)...")
+
+x <- run_NeuronChat(x, M=100) 
+print(glue("Analysis complete. Saving processed object to {x_rds_filepath}"))
+
 saveRDS(x, file = x_rds_filepath)
 
 # # ================ BEGIN FROM SAVED OBJECT ================

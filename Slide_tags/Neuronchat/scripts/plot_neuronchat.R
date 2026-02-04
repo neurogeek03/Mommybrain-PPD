@@ -4,70 +4,105 @@
 #     --bind ./out:/mnt/out \
 #     --bind ./scripts:/mnt/scripts \
 #     /scratch/mfafouti/docker/neuronchat_full.sif
-
-# ================ ARGS ================
-args <- commandArgs(trailingOnly = TRUE)
-
-if (length(args) != 2) {
-    stop("Usage: Rscript my_script.R <name> <age>")}
-
-sample <- args[1]
-
-
 library(NeuronChat)
 library(CellChat)
 library(glue)
 library(ggalluvial)
-library(optparse)
+# library(optparse)
 
 print('Libraries loaded!')
 
 # ================ ARGS ================
-option_list <- list(
-    make_option(c("-d", "--data_dir"), type="character", default="/mnt/data/BC13_TEST",
-                help="Directory containing the input data", metavar="character"),
-    make_option(c("-o", "--output_dir"), type="character", default="/mnt/out",
-                help="Directory for output files", metavar="character")
-)
+# This script is designed to be called from the command line.
+# It expects two arguments:
+# --data_dir: The directory containing the input files for a specific sample.
+#             This directory should have the ran_nc_object.rds and the metadata file.
+# --sample: The sample ID (e.g., "BC13").
 
-# ================ PARAMS ================
-# general
-class_column  <-"class_name"
+args <- commandArgs(trailingOnly = TRUE)
+
+data_dir <- NULL
+sample <- NULL
+
+i <- 1
+while (i <= length(args)) {
+    if (args[i] == "--data_dir" && i + 1 <= length(args)) {
+        data_dir <- args[i + 1]
+        i <- i + 2
+    } else if (args[i] == "--sample" && i + 1 <= length(args)) {
+        sample <- args[i + 1]
+        i <- i + 2
+    } else {
+        i <- i + 1
+    }
+}
+
+if (is.null(data_dir) || is.null(sample)) {
+    stop("Usage: Rscript plot_neuronchat.R --data_dir <path_to_sample_data> --sample <sample_id>", call. = FALSE)
+}
+
+# ================ PATHS AND PARAMS ================
+# General params
+class_column  <- "class_name"
 subclass_column <- "subclass_name"
 
-#input
-obj_dir <- "/mnt/out"
-data_dir <- "/mnt/data/BC13_TEST"
-meta_path <- file.path(data_dir, "pos_BC13_metadata.csv")
-#output
-out_dir <- "/mnt/out/figures"
-x_name <- "ran_nc_object.rds"
-csv_out_name <- "net_aggregated_x.csv"
+# Input paths
+# The ran neuronchat object is expected to be in the data_dir
+# Note: The 'test_neuronchat.R' script saves '..._neuronchat_object.rds'. 
+# This plotting script assumes you have run the next step and saved the result as 'ran_nc_object.rds'.
+# If your file is named differently, you may need to adjust 'x_name'.
+x_name <- glue("{sample}_neuronchat_object.rds")
+x_rds_filepath <- file.path(data_dir, x_name)
+
+# Metadata is also expected in the data_dir
+meta_name <- glue("{sample}_metadata.csv")
+meta_path <- file.path(data_dir, meta_name)
+
+# Output paths
+# Plots will be saved in a 'figures' subdirectory inside the data_dir
+out_dir <- file.path(data_dir, "figures")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+print(glue("Input object: {x_rds_filepath}"))
+print(glue("Metadata file: {meta_path}"))
+print(glue("Output directory for plots: {out_dir}"))
 
 
-csv_out_path <- file.path(obj_dir, csv_out_name)
-x_rds_filepath <- file.path(obj_dir, x_name)
-
+# ================ DATA LOADING ================
 # Loading ran NC object 
+if (!file.exists(x_rds_filepath)) {
+    stop(glue("ERROR: Input file not found at {x_rds_filepath}"), call. = FALSE)
+}
 x <- readRDS(x_rds_filepath)
+
 net_aggregated_x <- net_aggregation(x@net,method = 'weight')
 
 # ================ PREPROCESSING ================
 # meta_data <- read.csv(meta_path, row.names = 1, check.names = FALSE)
 # print(glue("Metadata loaded. Dimensions: {nrow(meta_data)} rows, {ncol(meta_data)} columns."))
 
-# Creating a mapping of subclass names to borader class names
+# Loading metadata to create cell type groupings
+if (!file.exists(meta_path)) {
+    stop(glue("ERROR: Metadata file not found at {meta_path}"), call. = FALSE)
+}
 meta_data <- read.csv(meta_path, row.names = 1, check.names = FALSE)
 df_group <- meta_data[!duplicated(meta_data[[subclass_column]]), c(class_column, subclass_column)]
 group <- structure(df_group[[class_column]], names = df_group[[subclass_column]])
 
-# ================ HEATMAP ================
+# Aggregated network for circle plot
+net_aggregated_x <- net_aggregation(x@net, method = 'weight')
+
+# ================ PLOTTING: HEATMAP ================
+print("Generating heatmap...")
 heatmap_path = file.path(out_dir, "heatmap_aggregated.png")
 png(heatmap_path, width = 30, height = 25, units = "in", res = 300)
-heatmap_aggregated(x, method='weight',group=group)
+heatmap_aggregated(x, method='weight', group=group)
 dev.off()
+print(glue("  - Saved to {heatmap_path}"))
 
-# ================ CIRCLES ================
+
+# ================ PLOTTING: CIRCLE PLOT ================
+print("Generating circle plot...")
 top = 0.05
 circles_path = file.path(out_dir, glue("arrow_circle_nc_{top}.png"))
 png(circles_path, width = 30, height = 25, units = "in", res = 300)
@@ -82,14 +117,14 @@ dev.off()
 # ================ RANK INTERACTIONS ================
 # This generates plots ranking the signaling pathways by their overall strength.
 
-# Set the path for the output PDF
+# ================ PLOTTING: RANKED INTERACTIONS ================
+print("Generating ranked signaling plots...")
 rank_plot_path <- file.path(out_dir, "ranked_signaling_plots.pdf")
 
 # Open a PDF device to save the plots
 pdf(rank_plot_path, width = 8, height = 10)
 
-# Plot 1: Rank OUTGOING signaling strength for each pathway
-# 'stacked = FALSE' shows the total strength from all cell groups
+# Plot 1: Rank OUTGOING signaling strength
 rankNet_Neuron(x,
     mode = "single",
     measure = "weight",
@@ -98,8 +133,7 @@ rankNet_Neuron(x,
     title = "Outgoing Signaling Strength (All Pathways)"
 )
 
-# Plot 2: Rank INCOMING signaling strength for each pathway
-# 'stacked = TRUE' shows the contribution of each cell group to the pathway's strength
+# Plot 2: Rank INCOMING signaling strength
 rankNet_Neuron(x,
     mode = "single",
     measure = "weight",
