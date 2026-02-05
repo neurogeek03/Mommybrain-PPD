@@ -60,6 +60,8 @@ adata.obs.loc[adata.obs[sample_key].isin(oil_samples), 'group'] = 'OIL'
 # print(duplicates.sum()) #0
 # # ###########
 
+adata.X = adata.layers["counts"]
+
 #TODO check if input data needs to be norm & log transformed
 # =================== COMPUTATIONS & UMAP ===================
 # Saving count data
@@ -78,9 +80,9 @@ sc.pl.umap(adata, color=[condition_key, sample_key, 'class_name', groupby], fram
 adata_path = data_dir / f'object_LIANA_{adata.n_obs}_pseudobulk_gene_names_var_condition.h5ad'
 adata.write(adata_path)
 
-# =================== IMPORT PROCESSED OBJECT ===================
-adata_path = data_dir / 'object_LIANA_108123_pseudobulk_gene_names_var_condition.h5ad'
-adata = sc.read_h5ad(adata_path)
+# # =================== IMPORT PROCESSED OBJECT ===================
+# adata_path = data_dir / 'object_LIANA_108123_pseudobulk_gene_names_var_condition.h5ad'
+# adata = sc.read_h5ad(adata_path)
 
 # =================== PSEUDOBULK ===================
 pdata = dc.pp.pseudobulk(
@@ -215,21 +217,27 @@ lr_res.head()
 
 # Let's visualize how this looks like for all interactions  (across all cell types)
 lr_res = lr_res.sort_values("interaction_stat", ascending=False)
-lr_res['interaction_stat'].hist(bins=50)
+hist =lr_res['interaction_stat'].hist(bins=50)
+fig = hist.get_figure()
+fig.savefig("interaction_stat_histogram.png", dpi=300)
 
-li.pl.tileplot(liana_res=lr_res,
+tileplot_fig = li.pl.tileplot(liana_res=lr_res,
                fill = 'expr',
                label='padj',
                label_fun = lambda x: '*' if x < 0.05 else np.nan,
-               top_n=15,
+               top_n=20,
                orderby = 'interaction_stat',
                orderby_ascending = False,
                orderby_absolute = False,
                source_title='Ligand',
                target_title='Receptor',
+               figure_size=(16, 11)
                )
+tileplot_fig = tileplot_fig + p9.theme(axis_text_x=p9.element_text(size=8, angle=90))
+tileplot_fig_path = output_base / 'top20_tileplot_figure.png'
+tileplot_fig.save(tileplot_fig_path, dpi=300)
 
-plot = li.pl.dotplot(liana_res=lr_res,
+dotplot_fig = li.pl.dotplot(liana_res=lr_res,
                      colour='interaction_stat',
                      size='ligand_pvalue',
                      inverse_size=True,
@@ -237,16 +245,20 @@ plot = li.pl.dotplot(liana_res=lr_res,
                      orderby_ascending=False,
                      orderby_absolute=True,
                      top_n=10,
-                     size_range=(0.5, 4)
+                     size_range=(0.5, 4),
+                     figure_size=(25, 10)
                      )
 
-# customize plot
-(
-    plot
-    + p9.theme_bw(base_size=14)
-    # fill cmap blue to red, with 0 the middle
-    + p9.scale_color_cmap('RdBu_r', midpoint=0, limits=(-10, 10))
-    # rotate x
-    + p9.theme(axis_text_x=p9.element_text(angle=90), figure_size=(11, 6))
 
-)
+dotplot_fig_path =  output_base / 'TOP10_dotplot_figure.png'
+dotplot_fig.save(dotplot_fig_path)
+# # customize plot
+# (
+#     plot
+#     + p9.theme_bw(base_size=14)
+#     # fill cmap blue to red, with 0 the middle
+#     + p9.scale_color_cmap('RdBu_r', midpoint=0, limits=(-10, 10))
+#     # rotate x
+#     + p9.theme(axis_text_x=p9.element_text(angle=90), figure_size=(11, 6))
+
+# )

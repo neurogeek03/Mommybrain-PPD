@@ -7,8 +7,6 @@ from scipy.sparse import issparse
 import numpy as np
 import argparse 
 
-#TODO edit input file names to be dependent on the sample arg in the R script 
-
 stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
 
@@ -63,6 +61,10 @@ print(collapsed_adata_all)
 print('Object AFTER collapsing - var names are mouse gene SYMBOLS:')
 print(collapsed_by_symbol)
 
+
+# =================== SAVE RAW COUNTS AS LAYER ===================
+collapsed_by_symbol.layers["counts"] = collapsed_by_symbol.X.copy()
+
 # =================== NORMALIZATION ===================
 print('checking if there are any negative values...')
 contains_negative = collapsed_by_symbol.X.min() < 0
@@ -78,7 +80,7 @@ print(contains_negative)
 print(collapsed_by_symbol.X[:5, :5])
 
 # =================== SAVE LARGE OBJECT ===================
-collapsed_path = data_dir / 'collapsed_DE_symbols.h5ad'
+collapsed_path = data_dir / 'layers_collapsed_DE_symbols.h5ad'
 collapsed_by_symbol.write(collapsed_path)
 
 

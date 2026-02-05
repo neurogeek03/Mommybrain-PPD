@@ -47,7 +47,7 @@ mkdir -p "${OUTPUT_DIR_HOST}"
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 # Path to the Apptainer image
-APPTAINER_IMAGE="../../docker/neuronchat_full.sif" # Adjust if the sif file is located elsewhere
+APPTAINER_IMAGE="/scratch/mfafouti/docker/neuronchat_full.sif" # Adjust if the sif file is located elsewhere
 
 echo "Starting NMF Pathway Analysis for: ${NEURONCHAT_OBJECT_PATH}"
 echo "Output will be saved to: ${OUTPUT_DIR_HOST}"
@@ -58,15 +58,15 @@ echo "Using Apptainer image: ${APPTAINER_IMAGE}"
 # /mnt/input_object_dir will contain the input .rds file
 # /mnt/output will be the directory where results are written
 # /mnt/scripts will contain the R scripts
-apptainer exec 
-  --bind "${INPUT_OBJECT_DIR_HOST}:/mnt/input_object_dir" 
-  --bind "${OUTPUT_DIR_HOST}:/mnt/output" 
-  --bind "${SCRIPT_DIR}:/mnt/scripts" 
-  "${APPTAINER_IMAGE}" 
-  Rscript /mnt/scripts/run_pathway_nmf_analysis.R 
-  --input_neuronchat_object_path "/mnt/input_object_dir/${INPUT_OBJECT_FILENAME}" 
-  --output_dir "/mnt/output" 
-  --k_range "2:10"
+apptainer exec \
+  --bind "${INPUT_OBJECT_DIR_HOST}:/mnt/input_object_dir" \
+  --bind "${OUTPUT_DIR_HOST}:/mnt/output" \
+  --bind "${SCRIPT_DIR}:/mnt/scripts" \
+  "${APPTAINER_IMAGE}" \
+  Rscript /mnt/scripts/run_pathway_nmf_analysis.R \
+  --input_neuronchat_object_path "/mnt/input_object_dir/${INPUT_OBJECT_FILENAME}" \
+  --output_dir "/mnt/output" \
+  --k 3
 
 if [ $? -eq 0 ]; then
   echo "NMF Pathway Analysis completed successfully."

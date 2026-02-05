@@ -84,7 +84,18 @@ zero_cols <- which(colSums(pathway_interaction_matrix) == 0)
 if (length(zero_cols) > 0) {
   pathway_interaction_matrix <- pathway_interaction_matrix[, -zero_cols, drop = FALSE]
 }
+# Scale matrix for numerical stability
+pathway_interaction_matrix <- pathway_interaction_matrix * 10000
 
+# ================ DIAGNOSTICS ================
+print("--- Matrix Diagnostics ---")
+print(glue("Dimensions of the final matrix: {nrow(pathway_interaction_matrix)} rows, {ncol(pathway_interaction_matrix)} columns"))
+print("Summary of matrix values:")
+print(summary(as.vector(pathway_interaction_matrix)))
+print(glue("Number of non-zero elements: {sum(pathway_interaction_matrix > 0)}"))
+print(glue("Is the matrix an NMF-ready object? {is.nmf(pathway_interaction_matrix)}"))
+print("--------------------------")
+# ===============================================
 
 # =======================================================
 #               --- CHOOSE SCRIPT MODE --- 
