@@ -103,7 +103,7 @@ print(glue("  - Saved to {heatmap_path}"))
 
 # ================ PLOTTING: CIRCLE PLOT ================
 print("Generating circle plot...")
-top = 0.05
+top = 0.01
 circles_path = file.path(out_dir, glue("arrow_circle_nc_{top}.png"))
 png(circles_path, width = 30, height = 25, units = "in", res = 300)
 # par(mfrow=c(1,2))

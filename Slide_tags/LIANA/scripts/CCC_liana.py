@@ -43,38 +43,40 @@ net = pd.read_csv(tf_regulons)
 # # =================== INPUT ===================
 # #NOTE this object contains min 10 cells per sample so were good
 
-# slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
-# adata_path = Path(slide_tags_merged[0])
-# adata = sc.read_h5ad(adata_path)
-# adata.obs.loc[adata.obs[sample_key].isin(cort_samples), 'group'] = 'CORT'
-# adata.obs.loc[adata.obs[sample_key].isin(oil_samples), 'group'] = 'OIL'
+slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
+adata_path = Path(slide_tags_merged[0])
+print(f'Using {adata_path} as the file path ...')
+adata = sc.read_h5ad(adata_path)
+adata.obs.loc[adata.obs[sample_key].isin(cort_samples), 'group'] = 'CORT'
+adata.obs.loc[adata.obs[sample_key].isin(oil_samples), 'group'] = 'OIL'
 
 # # =================== CHANGE VAR INDEX ===================
 # # fixing duplicates by summing
-# adata = collapse_by_gene_symbol(adata, gene_symbol_col='gene_symbol')
+# adata = collapse_by_gene_symbol(adata, gene_symbol_col=adata.var.index)
 # ########### sanity check
 # duplicate_counts = adata.var.index.value_counts()
 # duplicates = duplicate_counts[duplicate_counts > 1]
 # print('here are the number of duplicates after switching to gene names as teh index:')
 # print(duplicates.sum()) #0
-# ###########
+# # ###########
 
-# # =========ß========== COMPUTATIONS & UMAP ===================
-# # Saving count data
-# adata.layers["counts"] = adata.X.copy()
-# sc.pp.normalize_total(adata)
-# sc.pp.log1p(adata)
-# sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
-# sc.pl.highly_variable_genes(adata, save=True)
-# sc.tl.pca(adata)
-# sc.pp.neighbors(adata)
-# sc.tl.umap(adata)
+#TODO check if input data needs to be norm & log transformed
+# =================== COMPUTATIONS & UMAP ===================
+# Saving count data
+adata.layers["counts"] = adata.X.copy()
+sc.pp.normalize_total(adata)
+sc.pp.log1p(adata)
+sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
+sc.pl.highly_variable_genes(adata, save=True)
+sc.tl.pca(adata)
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
 
-# # Show pre-computed UMAP
-# sc.pl.umap(adata, color=[condition_key, sample_key, 'class_name', groupby], frameon=False, ncols=2, save=True)
+# Show pre-computed UMAP
+sc.pl.umap(adata, color=[condition_key, sample_key, 'class_name', groupby], frameon=False, ncols=2, save=True)
 
-# adata_path = data_dir / f'object_LIANA_{adata.n_obs}_pseudobulk_gene_names_var_condition.h5ad'
-# adata.write(adata_path)
+adata_path = data_dir / f'object_LIANA_{adata.n_obs}_pseudobulk_gene_names_var_condition.h5ad'
+adata.write(adata_path)
 
 # =================== IMPORT PROCESSED OBJECT ===================
 adata_path = data_dir / 'object_LIANA_108123_pseudobulk_gene_names_var_condition.h5ad'
@@ -175,3 +177,76 @@ for cell_group in pdata.obs[groupby].unique():
     dea_results[cell_group] = stat_res.results_df
 
 print(dea_results)
+
+# concat results across cell types
+dea_df = pd.concat(dea_results)
+dea_df = dea_df.reset_index().rename(columns={'level_0': groupby,'level_1':'index'}).set_index('index')
+dea_df.head()
+
+# PyDeseq Seems to intrdoce NAs for some p-values
+# NOTE: there sometimes some NaN being introduced, best to double check that, in this case it's only for a single gene, but it might be a problem.
+len(dea_df[dea_df.isna().any(axis=1)])
+
+
+# adata = adata[adata.obs[condition_key]=='stim'].copy()
+
+# sc.pp.normalize_total(adata, target_sum=1e4)
+# sc.pp.log1p(adata)
+
+
+#TODO 
+# collapse by mouse gene name 
+# change resource to mouse and use that 
+
+lr_res = li.multi.df_to_lr(adata,
+                           dea_df=dea_df,
+                           resource_name='mouseconsensus', # NOTE: uses MOUSE gene symbols!
+                           expr_prop=0.1, # calculated for adata as passed - used to filter interactions
+                           groupby=groupby,
+                           stat_keys=['stat', 'pvalue', 'padj'],
+                           use_raw=False,
+                           complex_col='stat', # NOTE: we use the Wald Stat to deal with complexes
+                           verbose=True,
+                           return_all_lrs=False,
+                           )
+
+lr_res = lr_res.sort_values("interaction_stat", ascending=False, key=abs)
+lr_res.head()
+
+# Let's visualize how this looks like for all interactions  (across all cell types)
+lr_res = lr_res.sort_values("interaction_stat", ascending=False)
+lr_res['interaction_stat'].hist(bins=50)
+
+li.pl.tileplot(liana_res=lr_res,
+               fill = 'expr',
+               label='padj',
+               label_fun = lambda x: '*' if x < 0.05 else np.nan,
+               top_n=15,
+               orderby = 'interaction_stat',
+               orderby_ascending = False,
+               orderby_absolute = False,
+               source_title='Ligand',
+               target_title='Receptor',
+               )
+
+plot = li.pl.dotplot(liana_res=lr_res,
+                     colour='interaction_stat',
+                     size='ligand_pvalue',
+                     inverse_size=True,
+                     orderby='interaction_stat',
+                     orderby_ascending=False,
+                     orderby_absolute=True,
+                     top_n=10,
+                     size_range=(0.5, 4)
+                     )
+
+# customize plot
+(
+    plot
+    + p9.theme_bw(base_size=14)
+    # fill cmap blue to red, with 0 the middle
+    + p9.scale_color_cmap('RdBu_r', midpoint=0, limits=(-10, 10))
+    # rotate x
+    + p9.theme(axis_text_x=p9.element_text(angle=90), figure_size=(11, 6))
+
+)

@@ -40,7 +40,7 @@ adata_path = files_matching[0]
 collapsed_adata_all = sc.read_h5ad(adata_path)
 
 # =================== SUBSET TO 1 SAMPLE ===================
-adata_subset = collapsed_adata_all[collapsed_adata_all.obs['sample'] == sample].copy()
+adata_subset = collapsed_adata_all[collapsed_adata_all.obs['treatment'] == sample].copy()
 print(adata_subset)
 
 # # =================== DATA VALIDATION ===================

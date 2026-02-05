@@ -22,7 +22,8 @@ cd $ROOT
 echo "Using ROOT directory: $ROOT"
 
 # ===== SAMPLES =====
-SAMPLES=("BC13" "BC14" "BC28" "BC15" "BC3" "BC9")
+# SAMPLES=("BC13" "BC14" "BC28" "BC15" "BC3" "BC9")
+SAMPLES=("CORT" "OIL")
 
 # ===== DETERMINE OUTPUT DIRECTORY =====
 if [ -z "$OUTPUT_DIR" ]; then
@@ -114,24 +115,24 @@ echo "All samples processed."
 # mkdir -p "$COMPARISON_OUTPUT_DIR_HOST"
 
 
-apptainer shell \
-    --bind ./scripts:/mnt/scripts \
-    --bind ./out:/mnt/out \
-    /scratch/mfafouti/docker/neuronchat_full.sif 
+# apptainer shell \
+#     --bind ./scripts:/mnt/scripts \
+#     --bind ./out:/mnt/out \
+#     /scratch/mfafouti/docker/neuronchat_full.sif 
 
 
-BASE_INPUT_DIR_CONTAINER="/mnt/out/auto/meta_added"
-COMPARISON_OUTPUT_DIR_CONTAINER="/mnt/out/auto/meta_test_comparison"
+# BASE_INPUT_DIR_CONTAINER="/mnt/out/auto/meta_added"
+# COMPARISON_OUTPUT_DIR_CONTAINER="/mnt/out/auto/meta_test_comparison"
 
-Rscript /mnt/scripts/run_comparative_analysis.R --base_dir "$BASE_INPUT_DIR_CONTAINER" --output_dir "$COMPARISON_OUTPUT_DIR_CONTAINER"
+# Rscript /mnt/scripts/run_comparative_analysis.R --base_dir "$BASE_INPUT_DIR_CONTAINER" --output_dir "$COMPARISON_OUTPUT_DIR_CONTAINER"
 
 
-########
+# ########
 
-apptainer shell \
-    --bind ./out/auto/meta_added/BC:/mnt/input_object_dir \
-    --bind ./out/nmf_pathway_analysis/BC3_select_k:/mnt/output \
-    --bind ./scripts:/mnt/scripts \
-    /scratch/mfafouti/docker/neuronchat_full.sif 
+# apptainer shell \
+#     --bind ./out/auto/meta_added/BC:/mnt/input_object_dir \
+#     --bind ./out/nmf_pathway_analysis/BC3_select_k:/mnt/output \
+#     --bind ./scripts:/mnt/scripts \
+#     /scratch/mfafouti/docker/neuronchat_full.sif 
 
-    Rscript /mnt/scripts/run_pathway_nmf_analysis.R --input_neuronchat_object_path "/mnt/input_object_dir/BC3_neuronchat_object.rds" --output_dir "/mnt/output" --k_range 2:10
+#     Rscript /mnt/scripts/run_pathway_nmf_analysis.R --input_neuronchat_object_path "/mnt/input_object_dir/BC3_neuronchat_object.rds" --output_dir "/mnt/output" --k_range 2:10
