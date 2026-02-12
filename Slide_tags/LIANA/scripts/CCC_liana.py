@@ -189,16 +189,13 @@ dea_df.head()
 # NOTE: there sometimes some NaN being introduced, best to double check that, in this case it's only for a single gene, but it might be a problem.
 len(dea_df[dea_df.isna().any(axis=1)])
 
+dea_path = output_base / 'first_try' / 'dea_result.csv'
+dea_df.write(dea_path)
 
 # adata = adata[adata.obs[condition_key]=='stim'].copy()
 
 # sc.pp.normalize_total(adata, target_sum=1e4)
 # sc.pp.log1p(adata)
-
-
-#TODO 
-# collapse by mouse gene name 
-# change resource to mouse and use that 
 
 lr_res = li.multi.df_to_lr(adata,
                            dea_df=dea_df,
@@ -246,19 +243,20 @@ dotplot_fig = li.pl.dotplot(liana_res=lr_res,
                      orderby_absolute=True,
                      top_n=10,
                      size_range=(0.5, 4),
+                     cmap='RdBu_r', 
                      figure_size=(25, 10)
                      )
 
-
+dotplot_fig = dotplot_fig + labs(size="padj (-log10 transformed)")
 dotplot_fig_path =  output_base / 'TOP10_dotplot_figure.png'
 dotplot_fig.save(dotplot_fig_path)
-# # customize plot
-# (
-#     plot
-#     + p9.theme_bw(base_size=14)
-#     # fill cmap blue to red, with 0 the middle
-#     + p9.scale_color_cmap('RdBu_r', midpoint=0, limits=(-10, 10))
-#     # rotate x
-#     + p9.theme(axis_text_x=p9.element_text(angle=90), figure_size=(11, 6))
+# customize plot
+(
+    plot
+    + p9.theme_bw(base_size=14)
+    # fill cmap blue to red, with 0 the middle
+    + p9.scale_color_cmap('RdBu_r', midpoint=0, limits=(-10, 10))
+    # rotate x
+    + p9.theme(axis_text_x=p9.element_text(angle=90), figure_size=(11, 6))
 
-# )
+)
