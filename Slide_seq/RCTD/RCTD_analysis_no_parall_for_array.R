@@ -26,10 +26,11 @@ reference <- readRDS(ref_path)
 Sys.setenv(OPENBLAS_NUM_THREADS = 1)  
 
 # ========= LIBRARIES =========
+#NOTE: Updated library calling to be compatible with functional docker image
 library(Seurat)
 packageVersion("Seurat")
-library(spacexr, lib.loc = "/opt/rctd_env/lib/R/library")
-library(quadprog, lib.loc = "/opt/rctd_env/lib/R/library")
+library(spacexr, lib.loc = "/opt/miniforge3/envs/rctd_env/lib/R/library")
+library(quadprog, lib.loc = "/opt/miniforge3/envs/rctd_env/lib/R/library")
 # library(doParallel,lib.loc = "/opt/rctd_env/lib/R/library")
 library(stringr)
 library(glue)
