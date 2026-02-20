@@ -47,7 +47,7 @@ for filename in os.listdir(in_dir):
 
     print(f'{ad.n_obs} cells remaining, after ensuring all RCTD spot class rows are non-empty')
 
-    # Filtering singlets only - OPTIONAL 
+    # Filtering out rejects only - OPTIONAL 
     ad = ad[ad.obs["RCTD_spot_class_rat"] != "reject"].copy()
 
     print(f'{ad.n_obs} cells remaining')

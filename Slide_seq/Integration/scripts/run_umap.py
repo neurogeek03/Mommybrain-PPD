@@ -2,14 +2,29 @@ import scanpy as sc
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import argparse
 # ========== CONFIG ==========
 # Paths
-filename = 'All_RCTD_types_singlet_score_0_slide_seq_15.h5ad'
-adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
-out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/OUT"        
-os.makedirs(out_dir, exist_ok=True)
+# filename = 'All_RCTD_types_singlet_score_0_slide_seq_15.h5ad'
+# adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
+# out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/OUT"        
+# os.makedirs(out_dir, exist_ok=True)
 
-sample = filename.split('_')[1]
+# sample = filename.split('_')[1]
+
+# ========== ARGUMENT PARSING ==========
+parser = argparse.ArgumentParser(description='Process Slide-seq AnnData objects.')
+parser.add_argument('input', type=str, help='Path to h5ad file')
+parser.add_argument('outdir', type=str, help='Output directory')
+args = parser.parse_args()
+
+# Assign paths
+adata_path = args.input
+out_dir = args.outdir
+
+# Create output directory and set Scanpy settings
+os.makedirs(out_dir, exist_ok=True)
+sc.settings.figdir = out_dir
 
 meta_column = "RCTD_spot_class_rat"
 filter_column = "RCTD_singlet_score_rat"

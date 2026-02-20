@@ -7,16 +7,28 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import scipy.sparse as sp
+import argparse
 
-filename = '1054147_umap_filtered_0_NEW_genelist_slide_seq_15.h5ad' #CHANGE
-# /scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/
-adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
-object_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects"
-out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/OUT"        
-os.makedirs(out_dir, exist_ok=True)
+# filename = '1054147_umap_filtered_0_NEW_genelist_slide_seq_15.h5ad' #CHANGE
+# # /scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/
+# adata_path = f"/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/{filename}"
+# object_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects"
+# out_dir = "/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/OUT"        
+# os.makedirs(out_dir, exist_ok=True)
+
+# ========== ARGUMENT PARSING ==========
+parser = argparse.ArgumentParser(description='Process Slide-seq AnnData objects.')
+parser.add_argument('input', type=str, help='Path to h5ad file')
+parser.add_argument('outdir', type=str, help='Output directory')
+args = parser.parse_args()
+
+# Assign paths
+adata_path = args.input
+out_dir = args.outdir
+
 
 sample = 'filtered'
-color_col = 'RCTD_singlet_score_rat'
+color_col = 'RCTD_first_type_rat'
 
 # ============ GET COLORS ============
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
@@ -73,7 +85,7 @@ adata_filtered.obs["coronal_section"] = adata_filtered.obs["coronal_section"].re
     "late": "caudal"
 })
 
-ad_filtered_path = os.path.join(object_dir, f"RAW_adata_filtered_{adata_filtered.n_obs}_10_in_any_2_samples.h5ad")
+ad_filtered_path = os.path.join(out_dir, f"RAW_adata_filtered_{adata_filtered.n_obs}_10_in_any_2_samples.h5ad")
 adata_filtered.write(ad_filtered_path)
 
 # adata_filtered = adata

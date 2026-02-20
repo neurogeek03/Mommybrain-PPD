@@ -67,5 +67,5 @@ OUTPUT_WEIGHTS="${OUTPUT_DIR}/${OUTPUT_WEIGHTS_FILENAME}"
 # ========== EXECUTE ==========
 apptainer exec \
     --bind /scratch/mfafouti/Mommybrain-PPD/Slide_seq/RCTD/new_RCTD_run:/workspace \
-    /scratch/mfafouti/seurat_rctd_lib_fix.sif \
+    /scratch/mfafouti/rctd_seurat.sif \
     Rscript /workspace/scripts/RCTD_analysis_no_parall_for_array.R "$SEEKER_FILE" "$CONTAINER_REF_PATH" "$OUTPUT_FILE" "$OUTPUT_SEURAT" "$OUTPUT_RCTD" "$OUTPUT_WEIGHTS" 
