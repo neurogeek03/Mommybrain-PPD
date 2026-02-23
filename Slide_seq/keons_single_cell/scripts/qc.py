@@ -56,11 +56,18 @@ print(f"Original size: {adata.n_obs} beads")
 print(f"Non-Neuron object: {adata_non_neurons.n_obs} beads")
 print(f"Neuron object: {adata_neurons.n_obs} beads")
 
-adata_nn_subset = adata_non_neurons[adata_non_neurons.obs['RCTD_spot_class_rat'] == 'singlet'].copy()
-adata_nn_subset = adata_nn_subset[adata_nn_subset.obs['RCTD_singlet_score_rat'] > 330].copy()
+# adata_nn_subset = adata_non_neurons[adata_non_neurons.obs['RCTD_spot_class_rat'] =='singlet'].copy()
+# adata_nn_subset = adata_nn_subset[adata_nn_subset.obs['RCTD_singlet_score_rat'] > 330].copy()
 
-adata_nn_subset_path = output_base / f'adata_nn_subset_{adata_nn_subset.n_obs}_singlets_score_330.h5ad'
-adata_nn_subset.write(adata_nn_subset_path)
+# adata_nn_subset_path = output_base / f'adata_nn_subset_{adata_nn_subset.n_obs}_singlets_score_330.h5ad'
+# adata_nn_subset.write(adata_nn_subset_path)
+
+########
+adata_neuron_subset = adata_neurons[adata_neurons.obs['RCTD_singlet_score_rat'] > 330].copy()
+
+adata_neuron_subset_path = output_base/f'adata_nn_subset_{adata_neuron_subset.n_obs}_singlets_score_330.h5ad'
+adata_neuron_subset.write(adata_neuron_subset_path)
+
 # sc.pp.calculate_qc_metrics(adata_neurons, percent_top=None, log1p=False, inplace=True)
 # sc.pl.violin(
 #     adata_neurons, 

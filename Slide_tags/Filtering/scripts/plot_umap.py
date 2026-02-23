@@ -9,14 +9,16 @@ import numpy as np
 from pathlib import Path
 
 # ============ PARAMS ============
-cell_type_column = 'subclass_name'
+cell_type_column = 'RCTD_first_type_rat'
+method = 'Slide-seq'
 
 # ============ PATHS ============
 project_folder = Path('/scratch/mfafouti/Mommybrain/Slide_tags/Filtering')
 # in_dir = project_folder / 'NEW_list_merged_filtered'
 out_dir = project_folder / 'out'
 
-ad_path = out_dir / "PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad"
+# ad_path = out_dir / "PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad"
+ad_path = '/scratch/mfafouti/Mommybrain/Slide_seq/merging_NN_neurons/output/dim_red/258708_umap_filtered_0_NEW_genelist_slide_seq_15.h5ad'
 
 adata = sc.read_h5ad(ad_path)
 file_stem = ad_path.stem
@@ -73,7 +75,7 @@ fig = px.scatter(
         }
     )
 fig.update_traces(marker=dict(size=2, opacity=0.8))
-fig.update_layout(title=f"UMAP Plot Slide_tags data, n={adata.n_obs} colored by {cell_type_column}",
+fig.update_layout(title=f"UMAP Plot {method} data, n={adata.n_obs} colored by {cell_type_column}",
                   paper_bgcolor='white', 
                   plot_bgcolor='white', 
                   legend=go.layout.Legend(itemsizing='constant'))

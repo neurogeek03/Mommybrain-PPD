@@ -15,15 +15,18 @@ cell_type_column = 'RCTD_first_type_rat'
 # ============ PATHS ============
 project_folder = Path('/scratch/mfafouti/Mommybrain/Slide_seq/Filtering')
 # in_dir = project_folder / 'NEW_list_merged_filtered'
-out_dir = project_folder / 'PRES'
+# out_dir = project_folder / 'PRES'
+
+out_dir = Path('/scratch/mfafouti/Mommybrain/Slide_seq/merging_NN_neurons/output/dim_red')
 # in_dir = project_folder / 'out'
 
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # ad_path = out_dir / "10_Celltype_subclass_223660_10_in_any_2_samples_UMAP.png"
 
-ad_path = Path('/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/adata_filtered_220626_10_in_any_2_samples_singlet_score_300.h5ad')
+# ad_path = Path('/scratch/mfafouti/Mommybrain/Slide_seq/Integration/FINAL_run_newgenelist/objects/adata_filtered_220626_10_in_any_2_samples_singlet_score_300.h5ad')
 
+ad_path = Path('/scratch/mfafouti/Mommybrain/Slide_seq/merging_NN_neurons/output/dim_red/258708_umap_filtered_0_NEW_genelist_slide_seq_15.h5ad')
 # /scratch/mfafouti/Mommybrain/Slide_tags/Filtering/out/DE_after_mt_filter_108123_mincells_10_in_2_samples_slide_tags.h5ad
 
 adata = sc.read_h5ad(ad_path)
@@ -137,6 +140,19 @@ sc.pl.umap(
 )
 
 print(f"Saved scanpy umap to {out_dir / f'umap{scanpy_fig_name}'}")
+
+scanpy_png_name = f"_{file_stem}_scanpy.png"
+sc.pl.umap(
+    adata, 
+    color=cell_type_column, 
+    title=f"UMAP projection, n={adata.n_obs} cells", 
+    save=scanpy_fig_name, 
+    show=False,  # Don't show inline, just save
+    frameon=False, # Common aesthetic choice
+    legend_loc=None # <-- THIS PLACES LABELS ON CLUSTERS, REMOVING THE LEGEND
+)
+
+print(f"Saved scanpy umap to {out_dir / f'umap{scanpy_png_name}'}")
 
 
 # ============ Barplot of cells per subclass (VERTICAL LOG SCALE) ============
