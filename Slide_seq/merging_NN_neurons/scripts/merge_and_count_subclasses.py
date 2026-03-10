@@ -27,7 +27,7 @@ from datetime import datetime
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 project_dir = Path(__file__).resolve().parents[1]
-output_dir  = project_dir / "output"
+output_dir  = project_dir / "output" / 'only_singlet_score'
 output_dir.mkdir(exist_ok=True)
 
 stamp       = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -61,7 +61,7 @@ neuronal_filtered = adata_neuronal[
 
 # Non-neuronal: RCTD_spot_class_rat == 'singlet' AND RCTD_singlet_score_rat > 330
 nn_filtered = adata_nn[
-    (adata_nn.obs["RCTD_spot_class_rat"] == "singlet") &
+    # (adata_nn.obs["RCTD_spot_class_rat"] == "singlet") &
     (adata_nn.obs["RCTD_singlet_score_rat"] > 330)
 ].copy()
 

@@ -28,7 +28,7 @@ out_dir = args.outdir
 
 
 sample = 'filtered'
-color_col = 'allen_class'
+color_col = 'RCTD_first_type_rat'
 
 # ============ GET COLORS ============
 color_df = pd.read_csv("/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv", usecols=["name", "color_hex_triplet"])
@@ -56,7 +56,7 @@ n_unique = adata.obs["RCTD_spot_class_rat"].nunique()
 print("Number of unique values:", n_unique)
 # adata = adata[adata.obs["RCTD_singlet_score_rat"] > 300].copy()
 
-# Count cells per sample and RCTD_first_type_rat
+# Count cells per sample and color_col
 counts = adata.obs.groupby(['sample', color_col]).size().reset_index(name='count')
 # Pivot table to make types as rows and samples as columns
 pivot = counts.pivot(index=color_col, columns='sample', values='count').fillna(0)
@@ -85,6 +85,9 @@ adata_filtered.obs["coronal_section"] = adata_filtered.obs["coronal_section"].re
     "late": "caudal"
 })
 
+if '_index' in adata_filtered.obs.columns:
+    adata_filtered.obs = adata_filtered.obs.drop(columns=['_index'])
+
 ad_filtered_path = os.path.join(out_dir, f"RAW_adata_filtered_{adata_filtered.n_obs}_10_in_any_2_samples.h5ad")
 adata_filtered.write(ad_filtered_path)
 
@@ -92,18 +95,16 @@ adata_filtered.write(ad_filtered_path)
 num_cells = adata_filtered.n_obs
 
 # ------------ Building legend ------------
-type_column = color_col
-type_counts = adata_filtered.obs[type_column].value_counts()
+type_counts = adata_filtered.obs[color_col].value_counts()
 
 # Sanity check
-n_unique = adata_filtered.obs[type_column].nunique()
 n_unique = len(type_counts)
-print(f"Unique {type_column}: {n_unique}")
+print(f"Unique {color_col}: {n_unique}")
 
 top_types = type_counts.head(30).index.tolist()
 # Build legend elements using your label_to_hex
 legend_elements = [Patch(facecolor=label_to_hex.get(t, "#808080"), label=t) for t in top_types]
-sc.pl.umap(adata_filtered, color='RCTD_first_type_rat', palette=label_to_hex, show=True)
+sc.pl.umap(adata_filtered, color=color_col, palette=label_to_hex, show=True)
 plt.title(f"UMAP of singlets (n = {num_cells}) after RCTD mouse", fontsize=14)
 # Build custom legend for top 30 only
 plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1.02, 0.5), title="Subclasses present with min n_cells=10 at all samples", fontsize=7)

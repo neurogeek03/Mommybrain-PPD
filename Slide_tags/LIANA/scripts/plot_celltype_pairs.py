@@ -11,8 +11,8 @@ import plotnine as p9
 import liana as li
 
 project_path = Path.cwd().parents[0]
-lr_res_path = project_path / 'out'/ 'first_try' / 'lr_liana_res.csv'
-output_dir = project_path / 'out' / 'celltype_interact'
+lr_res_path = project_path / 'out'/ 'edgeR_dge' / 'lr_res.csv'
+output_dir = project_path / 'out' /  'edgeR_dge' /'celltype_interact'
 output_dir.mkdir(exist_ok=True, parents=True)
 
 lr_res = pd.read_csv(lr_res_path)

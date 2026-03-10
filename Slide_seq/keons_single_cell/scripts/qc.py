@@ -56,17 +56,49 @@ print(f"Original size: {adata.n_obs} beads")
 print(f"Non-Neuron object: {adata_non_neurons.n_obs} beads")
 print(f"Neuron object: {adata_neurons.n_obs} beads")
 
-# adata_nn_subset = adata_non_neurons[adata_non_neurons.obs['RCTD_spot_class_rat'] =='singlet'].copy()
-# adata_nn_subset = adata_nn_subset[adata_nn_subset.obs['RCTD_singlet_score_rat'] > 330].copy()
+nn_subclasses = list(adata_non_neurons.obs['RCTD_first_type_rat'].cat.categories)
+print(nn_subclasses)
 
-# adata_nn_subset_path = output_base / f'adata_nn_subset_{adata_nn_subset.n_obs}_singlets_score_330.h5ad'
-# adata_nn_subset.write(adata_nn_subset_path)
+# Subclass → Class mapping (Allen Brain CCN20230722 taxonomy)
+# Source: CLASS_exlcusion_baseline_csv_mapping_output.csv
+nn_subclass_to_class = {
+    '318_Astro_NT_NN':       '30 Astro-Epen',
+    '319_Astro_TE_NN':       '30 Astro-Epen',
+    '320_Astro_OLF_NN':      '30 Astro-Epen',
+    '321_Astroependymal_NN': '30 Astro-Epen',
+    '322_Tanycyte_NN':       '30 Astro-Epen',
+    '323_Ependymal_NN':      '30 Astro-Epen',
+    '325_CHOR_NN':           '30 Astro-Epen',
+    '326_OPC_NN':            '31 OPC-Oligo',
+    '327_Oligo_NN':          '31 OPC-Oligo',
+    '328_OEC_NN':            '32 OEC',
+    '329_ABC_NN':            '33 Vascular',
+    '330_VLMC_NN':           '33 Vascular',
+    '331_Peri_NN':           '33 Vascular',
+    '332_SMC_NN':            '33 Vascular',
+    '333_Endo_NN':           '33 Vascular',
+    '334_Microglia_NN':      '34 Immune',
+    '335_BAM_NN':            '34 Immune',
+    '337_DC_NN':             '34 Immune',
+    '338_Lymphoid_NN':       '34 Immune',
+}
+
+adata_non_neurons.obs['allen_class'] = adata_non_neurons.obs[obs_column].map(nn_subclass_to_class)
+print(adata_non_neurons.obs['allen_class'].value_counts())
+print(adata_non_neurons.obs['allen_class'].isna().sum(), "unmapped beads")
+
+#######
+adata_nn_subset = adata_non_neurons[adata_non_neurons.obs['RCTD_spot_class_rat'] =='singlet'].copy()
+# adata_nn_subset = adata_non_neurons[adata_non_neurons.obs['RCTD_singlet_score_rat'] > 330].copy()
+
+adata_nn_subset_path = output_base / f'class_singlets_broader_adata_nn_subset_{adata_nn_subset.n_obs}_score_330.h5ad'
+adata_nn_subset.write(adata_nn_subset_path)
 
 ########
-adata_neuron_subset = adata_neurons[adata_neurons.obs['RCTD_singlet_score_rat'] > 330].copy()
+# adata_neuron_subset = adata_neurons[adata_neurons.obs['RCTD_singlet_score_rat'] > 330].copy()
 
-adata_neuron_subset_path = output_base/f'adata_nn_subset_{adata_neuron_subset.n_obs}_singlets_score_330.h5ad'
-adata_neuron_subset.write(adata_neuron_subset_path)
+# adata_neuron_subset_path = output_base/f'adata_nn_subset_{adata_neuron_subset.n_obs}_singlets_score_330.h5ad'
+# adata_neuron_subset.write(adata_neuron_subset_path)
 
 # sc.pp.calculate_qc_metrics(adata_neurons, percent_top=None, log1p=False, inplace=True)
 # sc.pl.violin(
