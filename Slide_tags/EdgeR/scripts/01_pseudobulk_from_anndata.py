@@ -9,8 +9,9 @@ Date: 09-03-2026
 # conda activate seurat_env
 
 # ========== IMPORTS ==========
-import scanpy as sc
+import argparse
 import os
+import scanpy as sc
 import anndata as ad
 import pandas as pd
 import numpy as np
@@ -18,16 +19,25 @@ import scipy.sparse as sp
 from my_functions import collapse_by_gene_symbol
 from pathlib import Path
 
-# ========== PARAMS ==========
-celltype_col = 'subclass_name'
+# ========== ARGS ==========
+parser = argparse.ArgumentParser(description="Pseudobulk scRNA-seq data from AnnData.")
+parser.add_argument("--h5ad", type=Path, required=True,
+                    help="Path to the input .h5ad file.")
+parser.add_argument("--output-dir", type=Path, required=True,
+                    help="Directory where per-cell-type *_counts.tsv files will be saved.")
+parser.add_argument("--celltype-col", type=str, default="subclass_name",
+                    help="obs column to use as cell type label (default: subclass_name).")
+parser.add_argument("--gene-symbol-col", type=str, default="gene_symbols",
+                    help="var column containing gene symbols (default: gene_symbols).")
+args = parser.parse_args()
+
+ad_file = args.h5ad
+out_dir = args.output_dir
+celltype_col = args.celltype_col
+gene_symbol_col = args.gene_symbol_col
 pct_mt_counts = 3
 
-# ========== DEFINING ESSENTIAL PATHS ==========
-project_path = Path.cwd().parents[0]
-out_dir = project_path / 'out' / 'new_march_26' / 'pseudobulk_outputs'
 out_dir.mkdir(exist_ok=True, parents=True)
-
-ad_file = os.path.join(project_path, 'DE_after_mt_filter_108123_mincells_10_in_2_samples_slide_tags.h5ad')
 
 # ========== READING DATA ==========
 adata = sc.read_h5ad(ad_file)
@@ -36,12 +46,12 @@ print(adata)
 adata.raw = adata  # stores current X as raw
 adata.X = adata.raw.X.copy()
 
-# ========== Removing more cells with mt counts ==========
-adata = adata[adata.obs['pct_counts_mt'] < pct_mt_counts].copy()
-print(f'adata object is now subset to {adata.n_obs}')
+# # ========== Removing more cells with mt counts ==========
+# adata = adata[adata.obs['pct_counts_mt'] < pct_mt_counts].copy()
+# print(f'adata object is now subset to {adata.n_obs}')
 
 # ========== COLLAPSE ADATA OBJ BY GENE SYMBOL ==========
-collapsed_adata = collapse_by_gene_symbol(adata, gene_symbol_col="gene_symbols", aggfunc="sum")
+collapsed_adata = collapse_by_gene_symbol(adata, gene_symbol_col=gene_symbol_col, aggfunc="sum")
 print(collapsed_adata)
 
 adata = collapsed_adata

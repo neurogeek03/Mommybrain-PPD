@@ -1,12 +1,18 @@
+import argparse
 import pandas as pd
 import numpy as np
 import json
 from pathlib import Path
 
-# Paths (relative to scripts/ directory)
-base_dir = Path.cwd().parents[0]
-dea_dir  = base_dir / "out" / "edger_lrt"
-out_dir  = base_dir / "out" / "figures" / "volcano_plots"
+parser = argparse.ArgumentParser(description="Interactive volcano plots from EdgeR results.")
+parser.add_argument("--input-dir", type=Path, required=True,
+                    help="Directory containing *_edgeR_results.tsv files.")
+parser.add_argument("--output-dir", type=Path, required=True,
+                    help="Directory where the output HTML will be saved.")
+args = parser.parse_args()
+
+dea_dir = args.input_dir.resolve()
+out_dir = args.output_dir
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # Load all per-cell-type TSVs; cell type = filename stem minus suffix
