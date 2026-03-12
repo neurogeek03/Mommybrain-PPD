@@ -21,8 +21,8 @@ data_dir = project_path / 'data'
 dea_path = output_base / 'edgeR_dge' / 'edgeR_dge_input_liana.csv'
 
 # =================== PARAMS ===================
-cort_samples = ["BC28", "BC3", "BC9"]
-oil_samples = ["BC15", "BC14", "BC13"]
+# cort_samples = ["BC28", "BC3", "BC9"]
+# oil_samples = ["BC15", "BC14", "BC13"]
 sample_key = 'sample'
 groupby = 'subclass_name'
 condition_key = 'group'
@@ -34,15 +34,15 @@ net = pd.read_csv(tf_regulons)
 # =================== INPUT ===================
 #NOTE this object contains min 10 cells per sample so were good
 
-slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
-adata_path = Path(slide_tags_merged[0])
-print(f'Using {adata_path} as the file path ...')
-adata = sc.read_h5ad(adata_path)
-adata.obs.loc[adata.obs[sample_key].isin(cort_samples), 'group'] = 'CORT'
-adata.obs.loc[adata.obs[sample_key].isin(oil_samples), 'group'] = 'OIL'
+# slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
+# adata_path = Path(slide_tags_merged[0])
+# print(f'Using {adata_path} as the file path ...')
+# adata = sc.read_h5ad(adata_path)
+# adata.obs.loc[adata.obs[sample_key].isin(cort_samples), 'group'] = 'CORT'
+# adata.obs.loc[adata.obs[sample_key].isin(oil_samples), 'group'] = 'OIL'
 
 # ================ AFTER creating the DE object ================
-dea_path = output_base / 'first_try' / 'dea_result.csv'
+# dea_path = output_base / 'first_try' / 'dea_result.csv'
 dea_df = pd.read_csv(dea_path, index_col=0)
 slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
 adata_path = Path(slide_tags_merged[0])

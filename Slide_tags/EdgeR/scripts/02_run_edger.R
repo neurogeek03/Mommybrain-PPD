@@ -90,19 +90,19 @@ for (counts_file in counts_files) {
       dge <- DGEList(counts = counts_sub, group = group)
       dge <- calcNormFactors(dge)
 
-      # Build covariate vector (same order as samples_sub)
-      section <- factor(covariate_df[samples_sub, "coronal_section"])
-      if (length(levels(section)) < 2) {
-        cat("  NOTE:", groupA_name, "vs", groupB_name, "for", celltype,
-            "- all samples same coronal_section, dropping covariate.\n")
-        design <- model.matrix(~group)
-      } else {
-        design <- model.matrix(~section + group)
-      }
+      # # Build covariate vector (same order as samples_sub)
+      # section <- factor(covariate_df[samples_sub, "coronal_section"])
+      # if (length(levels(section)) < 2) {
+      #   cat("  NOTE:", groupA_name, "vs", groupB_name, "for", celltype,
+      #       "- all samples same coronal_section, dropping covariate.\n")
+      #   design <- model.matrix(~group)
+      # } else {
+      #   design <- model.matrix(~section + group)
+      # }
 
-      # ---- GENE LEVEL FILTERING ----
-      keep <- filterByExpr(dge, design)
-      dge <- dge[keep, , keep.lib.sizes = FALSE]
+      # # ---- GENE LEVEL FILTERING ----
+      # keep <- filterByExpr(dge, design)
+      # dge <- dge[keep, , keep.lib.sizes = FALSE]
 
       dge <- estimateDisp(dge, design, robust = FALSE)
       fit <- glmFit(dge, design)
@@ -120,4 +120,4 @@ for (counts_file in counts_files) {
    }
 }
 
-message("✅ edgeR analysis complete for all cell types.")
+message(" edgeR analysis complete for all cell types.")

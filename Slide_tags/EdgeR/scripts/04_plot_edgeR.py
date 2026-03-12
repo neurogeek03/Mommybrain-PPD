@@ -145,21 +145,31 @@ def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
     df_summary["total"] = df_summary["upregulated"] + df_summary["downregulated"]
     df_summary = df_summary.sort_values(sort_by)
 
+    # Parse GroupA (baseline) and GroupB from the input directory name
+    comp_name = os.path.basename(os.path.normpath(input_dir))
+    if "_vs_" in comp_name:
+        group_a, group_b = comp_name.split("_vs_", 1)
+        label_higher = f"Higher in {group_b}"
+        label_lower  = f"Lower in {group_b}"
+    else:
+        label_higher = "Upregulated"
+        label_lower  = "Downregulated"
+
     fig, ax = plt.subplots(figsize=figsize)
     if horizontal:
         bar1 = ax.barh(df_summary["subclass"], df_summary["downregulated"],
-                       label="Downregulated (OIL > CORT)", color="blue")
+                       label=label_lower, color="red")
         bar2 = ax.barh(df_summary["subclass"], df_summary["upregulated"],
                        left=df_summary["downregulated"],
-                       label="Upregulated (CORT > OIL)", color="red")
+                       label=label_higher, color="blue")
         ax.set_xlabel("Number of significant genes")
     else:
         x = np.arange(len(df_summary))
         width = 0.35
         bar1 = ax.bar(x - width / 2, df_summary["downregulated"], width,
-                      label="Downregulated (OIL > CORT)", color="blue")
+                      label=label_lower, color="red")
         bar2 = ax.bar(x + width / 2, df_summary["upregulated"], width,
-                      label="Upregulated (CORT > OIL)", color="red")
+                      label=label_higher, color="blue")
         ax.set_xticks(x)
         ax.set_xticklabels(df_summary["subclass"], rotation=90, fontsize=8)
         ax.set_ylabel("Number of significant genes")
