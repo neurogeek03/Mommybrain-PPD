@@ -9,16 +9,16 @@ Column mapping:
   -------            ----------------------
   (row index)      -> gene (index)
   (filename stem)  -> subclass_name  [spaces restored from underscores]
-  logFC            -> log2FoldChange  [not used by df_to_lr stat_keys]
+  logFC            -> log2FoldChange and stat  [logFC used as signed stat for LIANA directionality]
   logCPM           -> baseMean        [proxy; different scale — not used by df_to_lr]
-  LR               -> stat            [likelihood-ratio stat; used by df_to_lr]
+  LR               -> (not used)      [LR is unsigned; replaced by logFC as stat]
   PValue           -> pvalue          [used by df_to_lr]
   FDR              -> padj            [used by df_to_lr]
   (absent)         -> lfcSE = NaN     [SE of log2FC; not used by df_to_lr]
 
 LIANA df_to_lr uses stat_keys=['stat', 'pvalue', 'padj'] (CCC_liana.py:208).
-baseMean, log2FoldChange, and lfcSE are carried along for schema compatibility
-but do not affect LIANA results.
+stat=logFC gives interaction_stat a direction (positive=up in CORT, negative=down in CORT),
+matching the signed Wald stat used by PyDESeq2.
 
 Usage:
   python make_liana_dea_csv.py <dea_dir>
@@ -60,7 +60,7 @@ for f in tsv_files:
         "baseMean":        df["logCPM"],          # log-CPM; proxy for baseMean
         "log2FoldChange":  df["logFC"],
         "lfcSE":           np.nan,                # no equivalent in EdgeR LRT
-        "stat":            df["LR"],              # likelihood-ratio statistic
+        "stat":            df["logFC"],             # signed log2FC for LIANA directionality
         "pvalue":          df["PValue"],
         "padj":            df["FDR"],
     }, index=df.index)

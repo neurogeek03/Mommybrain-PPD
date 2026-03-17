@@ -11,8 +11,8 @@ import plotnine as p9
 import liana as li
 
 project_path = Path.cwd().parents[0]
-lr_res_path = project_path / 'out'/ 'edgeR_dge' / 'lr_res.csv'
-output_dir = project_path / 'out' /  'edgeR_dge' /'celltype_interact'
+lr_res_path = project_path / 'out'/ 'edgeR_dge' / 'test' / 'lr_res.csv'
+output_dir = project_path / 'out' /  'edgeR_dge' /'test' / 'new_plots'
 output_dir.mkdir(exist_ok=True, parents=True)
 
 lr_res = pd.read_csv(lr_res_path)
@@ -21,7 +21,7 @@ lr_res = pd.read_csv(lr_res_path)
 print(lr_res.head())
 
 # Option 1: Count the number of significant interactions
-p_val = 0.05
+p_val = 0.1
 significant_interactions = lr_res[lr_res['interaction_padj'] < p_val]
 communication_counts = significant_interactions.groupby(['source', 'target', 'interaction','interaction_stat']).size().reset_index(name='interaction_count')
 communication_counts = communication_counts.sort_values(by='interaction_stat', ascending=False)
@@ -41,7 +41,7 @@ sns.heatmap(
     center=0,      # Center the colormap at 0, useful for diverging stats
     linewidths=.5, # Add lines between cells for better separation
     linecolor='black',
-    cbar_kws={'label': 'Interaction Statistic (High = UP in CORT)'} # Label for the color bar
+    cbar_kws={'label': 'Log2FC (High = UP in CORT)'} # Label for the color bar
 )
 
 plt.title(f'CCC aggregated by cell type: interactions with padj<{p_val} shown')
@@ -72,10 +72,19 @@ dotplot_fig = li.pl.dotplot(liana_res=significant_interactions,
                      top_n=10,
                      size_range=(0.5, 6),
                      cmap='RdBu_r',
-                     figure_size=(12, 5)
+                     figure_size=(19, 6)
                      )
 
-dotplot_fig = dotplot_fig + p9.labs(x="", y="", title="")
+max_abs_stat = significant_interactions['interaction_stat'].abs().max()
+dotplot_fig = dotplot_fig + p9.labs(x="", y="", title="") + \
+    p9.scale_color_gradientn(
+        colors=['#053061', '#2166ac', '#4393c3', '#92c5de', '#d1e5f0',
+                '#f7f7f7',
+                '#fddbc7', '#f4a582', '#d6604d', '#b2182b', '#67001f'],
+        values=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        limits=(-max_abs_stat, max_abs_stat),
+        name='Log2FC'
+    )
 
 # # Option 2: Average the interaction_stat for significant interactions
 # communication_scores = significant_interactions.groupby(['source', 'target'])['interaction_stat'].mean().reset_index(name='mean_interaction_stat')

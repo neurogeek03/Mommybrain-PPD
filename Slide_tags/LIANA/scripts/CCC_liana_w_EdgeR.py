@@ -13,12 +13,12 @@ print(f"------ Script started at {stamp} ------")
 # Paths
 project_path = Path.cwd().parents[0]
 print(f"current working directory: {project_path}")
-output_base = project_path / 'out'
+output_base = project_path / 'out'/ 'edgeR_dge' / 'test'
 output_base.mkdir(exist_ok=True, parents=True)
 figs_dir = output_base / 'figures'
 data_dir = project_path / 'data'
 
-dea_path = output_base / 'edgeR_dge' / 'edgeR_dge_input_liana.csv'
+dea_path = output_base / 'edgeR_dge_input_liana.csv'
 
 # =================== PARAMS ===================
 # cort_samples = ["BC28", "BC3", "BC9"]
@@ -44,8 +44,9 @@ net = pd.read_csv(tf_regulons)
 # ================ AFTER creating the DE object ================
 # dea_path = output_base / 'first_try' / 'dea_result.csv'
 dea_df = pd.read_csv(dea_path, index_col=0)
-slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
-adata_path = Path(slide_tags_merged[0])
+# slide_tags_merged = glob.glob(f'{data_dir}/*.h5ad')
+obj_liana = project_path / 'data' /'object_LIANA_108123_pseudobulk_gene_names_var_condition.h5ad'
+adata_path = Path(obj_liana)
 print(f'Using {adata_path} as the file path ...')
 adata = sc.read_h5ad(adata_path)
 

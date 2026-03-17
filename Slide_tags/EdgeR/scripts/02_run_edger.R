@@ -104,8 +104,11 @@ for (counts_file in counts_files) {
       # keep <- filterByExpr(dge, design)
       # dge <- dge[keep, , keep.lib.sizes = FALSE]
 
-      dge <- estimateDisp(dge, design, robust = FALSE)
-      fit <- glmFit(dge, design)
+      # dge <- estimateDisp(dge, design, robust = FALSE)
+      # fit <- glmFit(dge, design)
+
+      dge <- estimateDisp(dge, robust = FALSE)
+      fit <- glmFit(dge)
       lrt <- glmLRT(fit, coef = 2)  # Assumes treatmentB is second level i.e CORT
 
       # Save results — one subdirectory per comparison
