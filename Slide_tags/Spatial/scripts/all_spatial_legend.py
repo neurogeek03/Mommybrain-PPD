@@ -17,10 +17,10 @@ celltype_col = 'subclass_name'
 mommybrain_folder = Path('/project/rrg-shreejoy/MommyBrain/Slide_tags/Pipeline_data/')
 project_folder = Path('/scratch/mfafouti/Mommybrain/Slide_tags')
 coords_dir = mommybrain_folder / 'spatial_coordinates'
-out_dir = project_folder / 'Spatial'/'figures'
+out_dir = project_folder / 'Spatial'/'figures' / 'updated'
 adata_dir = project_folder / 'Filtering' / 'out'
 adata_path = adata_dir / "PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad"
-
+out_dir.mkdir(exist_ok=True, parents=True)
 # Make sure output directory exists
 out_dir.mkdir(parents=True, exist_ok=True)
 fig_path = out_dir / f"mt_filtered_{celltype_col}_NEW_combined_spatial_all_samples.png"

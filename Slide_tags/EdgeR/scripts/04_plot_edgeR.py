@@ -100,7 +100,7 @@ def plot_volcano_edger(res_df, title, ax=None, logfc_thresh=0.1, fdr_thresh=0.1)
 
 
 def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
-                     min_genes=1, sort_by="total", figsize=(12, 9), horizontal=False):
+                     min_genes=1, sort_by="total", figsize=(10, 12), horizontal=False):
     """
     Generate a barplot of number of significantly up/downregulated genes per file.
 
@@ -149,8 +149,8 @@ def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
     comp_name = os.path.basename(os.path.normpath(input_dir))
     if "_vs_" in comp_name:
         group_a, group_b = comp_name.split("_vs_", 1)
-        label_higher = f"Higher in {group_b}"
-        label_lower  = f"Lower in {group_b}"
+        label_higher = f"Higher in {group_a}"
+        label_lower  = f"Lower in {group_a}"
     else:
         label_higher = "Upregulated"
         label_lower  = "Downregulated"
@@ -158,10 +158,10 @@ def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
     fig, ax = plt.subplots(figsize=figsize)
     if horizontal:
         bar1 = ax.barh(df_summary["subclass"], df_summary["downregulated"],
-                       label=label_lower, color="red")
+                       label=label_lower, color="blue")
         bar2 = ax.barh(df_summary["subclass"], df_summary["upregulated"],
                        left=df_summary["downregulated"],
-                       label=label_higher, color="blue")
+                       label=label_higher, color="red")
         ax.set_xlabel("Number of significant genes")
     else:
         x = np.arange(len(df_summary))
@@ -209,7 +209,7 @@ def plot_and_save_individual_volcanos(input_dir, output_dir, logfc_thresh=0.1, f
             df = df.dropna(subset=["logFC", "PValue", "FDR"])
 
             title = os.path.basename(filepath).replace("_edgeR_results.tsv", "")
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(12, 6))
 
             plot_volcano_edger(df, title=title, ax=ax,
                                logfc_thresh=logfc_thresh, fdr_thresh=fdr_thresh)
@@ -255,7 +255,7 @@ def parse_args():
     bp.add_argument("--output", "-o", default=os.path.join(DEFAULT_OUTPUT_DIR, "DE_summary_barplot.png"),
                     help="Output file path.")
     bp.add_argument("--logfc-thresh", type=float, default=1, help="log2FC threshold (default: 1.0)")
-    bp.add_argument("--fdr-thresh", type=float, default=0.1, help="FDR threshold (default: 0.05)")
+    bp.add_argument("--fdr-thresh", type=float, default=0.05, help="FDR threshold (default: 0.05)")
     bp.add_argument("--min-genes", type=int, default=1, help="Min DE genes to include a group (default: 1)")
     bp.add_argument("--sort-by", choices=["total", "upregulated", "downregulated"],
                     default="total", help="Sort bars by this column (default: total)")

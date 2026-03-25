@@ -42,7 +42,7 @@ parser.add_argument("dea_dir", type=Path, help="Directory containing *_edgeR_res
 args = parser.parse_args()
 
 dea_dir  = args.dea_dir.resolve()
-out_path = dea_dir.parent / "edgeR_dge_input_liana.csv"
+out_path = dea_dir / "edgeR_dge_input_liana.csv"
 
 tsv_files = sorted(dea_dir.glob("*_edgeR_results.tsv"))
 print(f"Found {len(tsv_files)} cell-type files in {dea_dir}")
