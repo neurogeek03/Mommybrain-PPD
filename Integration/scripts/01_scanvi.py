@@ -64,20 +64,10 @@ print(f"Shape: {adata.shape}")
 # --- Set up scANVI labels ---
 # Reference method (Slide-tags) keeps cell_type labels
 # Query method (Slide-seq) gets "unknown" for semi-supervised learning
-# Rare Slide-tags types (<min_cells_per_label) are also remapped to unlabeled
-# to prevent NaN during training; cells are retained in the object.
 unlabeled = SCANVI_PARAMS["unlabeled_category"]
-min_cells = SCANVI_PARAMS.get("min_cells_per_label", 10)
-
 adata.obs["scanvi_labels"] = adata.obs["cell_type"].astype(str).copy()
 query_mask = adata.obs["method"] != REF_METHOD
 adata.obs.loc[query_mask, "scanvi_labels"] = unlabeled
-
-label_counts = adata.obs.loc[~query_mask, "scanvi_labels"].value_counts()
-rare_labels = label_counts[label_counts < min_cells].index.tolist()
-if rare_labels:
-    print(f"Remapping {len(rare_labels)} rare label(s) with <{min_cells} cells to '{unlabeled}' (cells retained): {rare_labels}")
-    adata.obs.loc[adata.obs["scanvi_labels"].isin(rare_labels), "scanvi_labels"] = unlabeled
 
 n_labeled = (~query_mask).sum()
 n_unlabeled = query_mask.sum()

@@ -29,6 +29,10 @@ parser.add_argument("--celltype-col", type=str, default="subclass_name",
                     help="obs column to use as cell type label (default: subclass_name).")
 parser.add_argument("--gene-symbol-col", type=str, default="gene_symbols",
                     help="var column containing gene symbols (default: gene_symbols).")
+parser.add_argument("--merge-celltypes", type=str, nargs="+", default=None,
+                    help="Two or more cell type names to merge into a single group before pseudobulking.")
+parser.add_argument("--merge-label", type=str, default=None,
+                    help="Label for the merged group (default: cell type names joined with '+').")
 args = parser.parse_args()
 
 ad_file = args.h5ad
@@ -55,6 +59,14 @@ collapsed_adata = collapse_by_gene_symbol(adata, gene_symbol_col=gene_symbol_col
 print(collapsed_adata)
 
 adata = collapsed_adata
+
+# ========== MERGE CELL TYPES (optional) ==========
+if args.merge_celltypes:
+    merge_label = args.merge_label or "+".join(args.merge_celltypes)
+    mask = adata.obs[celltype_col].isin(args.merge_celltypes)
+    print(f"Merging {mask.sum()} cells from {args.merge_celltypes} into '{merge_label}'.")
+    adata.obs[celltype_col] = adata.obs[celltype_col].astype(str)
+    adata.obs.loc[mask, celltype_col] = merge_label
 
 # ========== LOOPING OVER ALL CELL TYPES ==========
 for celltype in adata.obs[celltype_col].unique():

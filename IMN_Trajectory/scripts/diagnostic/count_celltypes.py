@@ -4,6 +4,7 @@ import io
 
 all_cells_path = '/scratch/mfafouti/Mommybrain/IMN_Trajectory/out/subclass_replicate_representation_all_cells.csv'
 data = pd.read_csv(all_cells_path)
+data = data.sort_values(by='OIL', ascending=False)
 
 # subset_path = ''
 data.set_index("subclass_name", inplace=True)

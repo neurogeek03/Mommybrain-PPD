@@ -17,21 +17,12 @@
 
 # ========= LIBRARIES =========
 library(edgeR)
-library(stringr, lib.loc = "/opt/seurat_env/lib/R/library")
-library(vctrs, lib.loc = "/opt/seurat_env/lib/R/library")
 
 # ========= CONTAINER PATHS =========
 input_dir        <- "/workspace/out/new_march_26/pseudobulk_outputs"
 output_dir       <- "/workspace/out/edger_lrt"
 comparisons_file <- "/workspace/comparisons.csv"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-
-# ========= LOAD COVARIATE =========
-covariate_file <- "/workspace/rostral_caudal.csv"
-covariate_df <- read.csv(covariate_file, stringsAsFactors = FALSE)
-covariate_df$sample         <- trimws(covariate_df$sample)
-covariate_df$coronal_section <- trimws(covariate_df$coronal_section)
-rownames(covariate_df) <- covariate_df$sample
 
 # ========= LOAD COMPARISONS =========
 # CSV must have columns: GroupA_name, GroupA_samples, GroupB_name, GroupB_samples
@@ -54,7 +45,7 @@ print('The counts files found are:')
 print(counts_files)
 
 for (counts_file in counts_files) {
-  celltype <- str_replace(basename(counts_file), "_counts.tsv", "")
+  celltype <- sub("_counts\\.tsv$", "", basename(counts_file))
   message("Processing cell type: ", celltype)
   
   # Load data

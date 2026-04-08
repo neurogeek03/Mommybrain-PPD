@@ -151,7 +151,7 @@ if missing:
 if DOUBLET_FILTER:
     col = DOUBLET_FILTER["column"]
     keep = DOUBLET_FILTER["keep"]
-    n_before = st.n_obs
+    n_before = st.n_obsokay
     st = st[st.obs[col] == keep].copy()
     n_removed = n_before - st.n_obs
     print(f"\nDoublet filtering (Slide-tags): {n_before} -> {st.n_obs} cells ({n_removed} doublets removed)")
