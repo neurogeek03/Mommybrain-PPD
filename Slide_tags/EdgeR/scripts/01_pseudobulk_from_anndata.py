@@ -1,7 +1,8 @@
 """
 Title: Extract edgeR input from anndata object
-Description:  Pseudobulk snRNA-seq data by summing raw counts for all samples in each cell type
-Author:   Maria Eleni Fafouti 
+Description:  Pseudobulk snRNA-seq data by summing raw counts for all samples in each cell type.
+              All genes are passed through; gene-level filtering is delegated to EdgeR (filterByExpr).
+Author:   Maria Eleni Fafouti
 Date: 09-03-2026
 """
 
@@ -29,10 +30,6 @@ parser.add_argument("--celltype-col", type=str, default="subclass_name",
                     help="obs column to use as cell type label (default: subclass_name).")
 parser.add_argument("--gene-symbol-col", type=str, default="gene_symbols",
                     help="var column containing gene symbols (default: gene_symbols).")
-parser.add_argument("--merge-celltypes", type=str, nargs="+", default=None,
-                    help="Two or more cell type names to merge into a single group before pseudobulking.")
-parser.add_argument("--merge-label", type=str, default=None,
-                    help="Label for the merged group (default: cell type names joined with '+').")
 args = parser.parse_args()
 
 ad_file = args.h5ad
@@ -60,41 +57,12 @@ print(collapsed_adata)
 
 adata = collapsed_adata
 
-# ========== MERGE CELL TYPES (optional) ==========
-if args.merge_celltypes:
-    merge_label = args.merge_label or "+".join(args.merge_celltypes)
-    mask = adata.obs[celltype_col].isin(args.merge_celltypes)
-    print(f"Merging {mask.sum()} cells from {args.merge_celltypes} into '{merge_label}'.")
-    adata.obs[celltype_col] = adata.obs[celltype_col].astype(str)
-    adata.obs.loc[mask, celltype_col] = merge_label
-
 # ========== LOOPING OVER ALL CELL TYPES ==========
 for celltype in adata.obs[celltype_col].unique():
     print(f"Processing cell type: {celltype}")
     
     # Subset AnnData to just this cell type
     adata_sub = adata[adata.obs[celltype_col] == celltype]
-
-    # === Filter genes: expressed in ≥10% of cells in any condition ===
-    conditions = ['OIL', 'CORT']
-    keep_genes = set()
-
-    for cond in conditions:
-        cond_mask = adata_sub.obs['treatment'] == cond
-        X_cond = adata_sub[cond_mask].X
-
-        if sp.issparse(X_cond):
-            nonzero_counts = (X_cond > 0).sum(axis=0).A1
-        else:
-            nonzero_counts = (X_cond > 0).sum(axis=0)
-
-        total_cells = cond_mask.sum()
-        frac_expressed = nonzero_counts / total_cells
-        gene_mask = frac_expressed >= 0.10
-        keep_genes.update(adata_sub.var_names[gene_mask])
-
-    adata_sub = adata_sub[:, list(keep_genes)]
-    print(f" {len(keep_genes)} genes retained for cell type '{celltype}' after 10% expression filtering.")
 
     # Prepare per-sample aggregation
     samples = adata_sub.obs['sample'].unique()

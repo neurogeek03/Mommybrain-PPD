@@ -14,7 +14,7 @@ import scipy.sparse as sp
 
 SUBCLASS_COL = "subclass_name"
 SAMPLE_COL   = "sample"
-TARGET_CLASS = "038 DG"
+TARGET_CLASS = '045 OB-STR-CTX Inh IMN'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("h5ad", help="Path to the h5ad file")

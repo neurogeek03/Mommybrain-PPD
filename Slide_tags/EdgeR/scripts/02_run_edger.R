@@ -1,25 +1,28 @@
 # ==========================================================================
 # Title:        Run DE using EdgeR
-# Description:  Running EdgeR LRT model and saving the results as csv files 
+# Description:  Running EdgeR LRT model and saving the results as csv files.
+#               Pipeline: DGEList → lib.size filter → filterByExpr → TMM norm
+#                         → estimateDisp → glmFit → glmLRT
 # Author:       Maria Eleni Fafouti
 # Date:         2025-06-18
 # ==========================================================================
 
-# bash 
-# cd to mommybrain folder on scratch
+# bash
+# cd /scratch/mfafouti/Mommybrain-PPD/Slide_tags/EdgeR
 
 # apptainer shell \
-#   --bind /scratch/mfafouti/Mommybrain/Slide_tags/EdgeR:/workspace \
-#   --bind /scratch/mfafouti/Mommybrain/Slide_tags/EdgeR/out:/workspace/out \
-#   --bind /scratch/mfafouti/Mommybrain/Slide_tags/EdgeR/out/new_march_26/pseudobulk_outputs:/workspace/pseudobulk_outputs \
+#   --bind /scratch/mfafouti/Mommybrain-PPD/Slide_tags/EdgeR:/workspace \
+#   --bind /scratch/mfafouti/Mommybrain-PPD/Slide_tags/EdgeR/out:/workspace/out \
 #   --bind /scratch/mfafouti/miniforge3/envs/seurat_env:/opt/seurat_env \
 #   /scratch/mfafouti/docker/edger.sif
 
 # ========= LIBRARIES =========
 library(edgeR)
+library(stringr, lib.loc = "/opt/seurat_env/lib/R/library")
+library(vctrs, lib.loc = "/opt/seurat_env/lib/R/library")
 
 # ========= CONTAINER PATHS =========
-input_dir        <- "/workspace/out/new_march_26/pseudobulk_outputs"
+input_dir        <- "/workspace/out/pseudobulk_outputs"
 output_dir       <- "/workspace/out/edger_lrt"
 comparisons_file <- "/workspace/comparisons.csv"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
@@ -45,7 +48,7 @@ print('The counts files found are:')
 print(counts_files)
 
 for (counts_file in counts_files) {
-  celltype <- sub("_counts\\.tsv$", "", basename(counts_file))
+  celltype <- str_replace(basename(counts_file), "_counts.tsv", "")
   message("Processing cell type: ", celltype)
   
   # Load data
@@ -79,28 +82,33 @@ for (counts_file in counts_files) {
     tryCatch({
       # --- edgeR analysis ---
       dge <- DGEList(counts = counts_sub, group = group)
+
+      # ---- SAMPLE FILTER: drop pseudobulk samples with very low total counts ----
+      keep.samples <- dge$samples$lib.size > 5e4
+      if (sum(keep.samples) < ncol(dge)) {
+        dropped <- colnames(dge)[!keep.samples]
+        cat("  Dropping low-lib-size samples:", paste(dropped, collapse = ", "), "\n")
+        dge <- dge[, keep.samples, keep.lib.sizes = FALSE]
+        group <- dge$samples$group
+        groupA_present <- groupA_present[groupA_present %in% colnames(dge)]
+        groupB_present <- groupB_present[groupB_present %in% colnames(dge)]
+        if (length(groupA_present) < 2 | length(groupB_present) < 2) {
+          cat("  Skipping after lib.size filter: insufficient samples.\n")
+          return(NULL)
+        }
+      }
+
+      # ---- GENE FILTER: remove lowly expressed genes on pseudobulk counts ----
+      keep.genes <- filterByExpr(dge, group = group)
+      cat("  Keeping", sum(keep.genes), "of", nrow(dge), "genes after filterByExpr.\n")
+      dge <- dge[keep.genes, , keep.lib.sizes = FALSE]
+
+      # ---- TMM NORMALIZATION ----
       dge <- calcNormFactors(dge)
 
-      # # Build covariate vector (same order as samples_sub)
-      # section <- factor(covariate_df[samples_sub, "coronal_section"])
-      # if (length(levels(section)) < 2) {
-      #   cat("  NOTE:", groupA_name, "vs", groupB_name, "for", celltype,
-      #       "- all samples same coronal_section, dropping covariate.\n")
-      #   design <- model.matrix(~group)
-      # } else {
-      #   design <- model.matrix(~section + group)
-      # }
-
-      # # ---- GENE LEVEL FILTERING ----
-      # keep <- filterByExpr(dge, design)
-      # dge <- dge[keep, , keep.lib.sizes = FALSE]
-
-      # dge <- estimateDisp(dge, design, robust = FALSE)
-      # fit <- glmFit(dge, design)
-
-      dge <- estimateDisp(dge, robust = FALSE)
+      dge <- estimateDisp(dge, robust = TRUE)
       fit <- glmFit(dge)
-      lrt <- glmLRT(fit, coef = 2)  # Assumes treatmentB is second level i.e CORT
+      lrt <- glmLRT(fit, coef = 2)  # GroupB (second level) vs GroupA
 
       # Save results — one subdirectory per comparison
       comp_dir <- file.path(output_dir, paste0(groupA_name, "_vs_", groupB_name))

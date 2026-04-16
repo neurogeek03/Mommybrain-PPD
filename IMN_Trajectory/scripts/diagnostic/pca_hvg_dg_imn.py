@@ -27,7 +27,7 @@ stamp = datetime.now().strftime("%M%S%H_%Y%m%d")
 print(f"------ Script started at {stamp} ------")
 
 # ── config ──────────────────────────────────────────────────────────────────────
-project_path = Path.cwd().parents[0]
+project_path = Path(__file__).resolve().parents[2]
 DATA         = project_path / 'data' / 'PCT_test_QC_merged_filtered_114914_mincells_10_in_2_samples_slide_tags.h5ad'
 OUT_DIR      = project_path / 'out'
 OUT_DIR.mkdir(exist_ok=True, parents=True)

@@ -100,7 +100,8 @@ def plot_volcano_edger(res_df, title, ax=None, logfc_thresh=0.1, fdr_thresh=0.1)
 
 
 def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
-                     min_genes=1, sort_by="total", figsize=(10, 12), horizontal=False):
+                     min_genes=1, sort_by="total", figsize=(10, 12), horizontal=False,
+                     export_celltypes=None):
     """
     Generate a barplot of number of significantly up/downregulated genes per file.
 
@@ -144,6 +145,12 @@ def plot_deg_barplot(input_dir, output_path, logfc_thresh=1, fdr_thresh=0.5,
     df_summary = pd.DataFrame(summary)
     df_summary["total"] = df_summary["upregulated"] + df_summary["downregulated"]
     df_summary = df_summary.sort_values(sort_by)
+
+    if export_celltypes is not None:
+        ct_path = Path(export_celltypes)
+        ct_path.parent.mkdir(parents=True, exist_ok=True)
+        df_summary[["subclass"]].rename(columns={"subclass": "celltype"}).to_csv(ct_path, index=False)
+        print(f"Exported cell type list: {ct_path}")
 
     # Parse GroupA (baseline) and GroupB from the input directory name
     comp_name = os.path.basename(os.path.normpath(input_dir))
@@ -260,6 +267,8 @@ def parse_args():
     bp.add_argument("--sort-by", choices=["total", "upregulated", "downregulated"],
                     default="total", help="Sort bars by this column (default: total)")
     bp.add_argument("--horizontal", action="store_true", help="Plot horizontal bars.")
+    bp.add_argument("--export-celltypes", default=None, metavar="PATH",
+                    help="If set, save a CSV of cell types passing thresholds to this path (for use with 03_plot_gprofiler.py --celltypes-csv).")
 
     # --- volcanos ---
     vp = subparsers.add_parser("volcanos", help="Individual volcano plots per subclass.")
@@ -283,6 +292,7 @@ def main():
             min_genes=args.min_genes,
             sort_by=args.sort_by,
             horizontal=args.horizontal,
+            export_celltypes=args.export_celltypes,
         )
 
     elif args.command == "volcanos":
