@@ -11,6 +11,7 @@
 !*/
 
 # But still ignore these even if they match above
+**/archive/
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/

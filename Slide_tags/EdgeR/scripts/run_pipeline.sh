@@ -29,7 +29,12 @@ else
   CELLTYPE_COL="${CELLTYPE_COL:-subclass_name}"
   read -rp "Gene symbol column name [gene_symbols]: " GENE_SYMBOL_COL
   GENE_SYMBOL_COL="${GENE_SYMBOL_COL:-gene_symbols}"
+  read -rp "EdgeR model [lrt/qlf, default: lrt]: " EDGER_MODEL
+  EDGER_MODEL="${EDGER_MODEL:-lrt}"
 fi
+
+EDGER_MODEL="${EDGER_MODEL:-lrt}"
+EDGER_SUBDIR="edger_${EDGER_MODEL}"
 
 H5AD_FILE=$(realpath "$H5AD_FILE")
 if [ ! -f "$H5AD_FILE" ]; then
@@ -54,7 +59,7 @@ if [ -d "$RUN_DIR" ]; then
 fi
 
 mkdir -p "$PSEUDOBULK_DIR"
-mkdir -p "$RUN_DIR/edger_lrt"
+mkdir -p "$RUN_DIR/$EDGER_SUBDIR"
 mkdir -p "$RUN_DIR/figures"
 cp "$COMPARISONS_CSV" "$RUN_DIR/comparisons.csv"
 
@@ -63,20 +68,26 @@ echo "Run folder:     $RUN_DIR"
 echo ""
 
 # ========== STEP 1: PSEUDOBULK ==========
-echo "[1/5] Pseudobulking from AnnData..."
-conda run -n "$SC_ENV" python "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" \
-  --h5ad "$H5AD_FILE" \
-  --output-dir "$PSEUDOBULK_DIR" \
-  --celltype-col "$CELLTYPE_COL" \
-  --gene-symbol-col "$GENE_SYMBOL_COL"
+EXISTING_COUNTS=$(find "$PSEUDOBULK_DIR" -name "*_counts.tsv" 2>/dev/null | wc -l)
+if [ "$EXISTING_COUNTS" -gt 0 ]; then
+  echo "[1/5] Skipping pseudobulk — $EXISTING_COUNTS count files already exist in $PSEUDOBULK_DIR"
+else
+  echo "[1/5] Pseudobulking from AnnData..."
+  conda run -n "$SC_ENV" python "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" \
+    --h5ad "$H5AD_FILE" \
+    --output-dir "$PSEUDOBULK_DIR" \
+    --celltype-col "$CELLTYPE_COL" \
+    --gene-symbol-col "$GENE_SYMBOL_COL"
+fi
 
 # ========== STEP 2: EdgeR LRT (Apptainer) ==========
 echo ""
-echo "[2/5] Running EdgeR LRT (Apptainer)..."
+echo "[2/5] Running EdgeR (model: $EDGER_MODEL) (Apptainer)..."
 apptainer exec \
+  --env EDGER_MODEL="$EDGER_MODEL" \
   --bind "$WORKSPACE:/workspace" \
   --bind "$PSEUDOBULK_DIR:/workspace/out/pseudobulk_outputs" \
-  --bind "$RUN_DIR/edger_lrt:/workspace/out/edger_lrt" \
+  --bind "$RUN_DIR/$EDGER_SUBDIR:/workspace/out/edger_out" \
   --bind "$RUN_DIR/comparisons.csv:/workspace/comparisons.csv" \
   --bind "$WORKSPACE/rostral_caudal.csv:/workspace/rostral_caudal.csv" \
   --bind "$SEURAT_ENV:/opt/seurat_env" \
@@ -96,7 +107,7 @@ COMPARISONS=$(conda run -n "$SC_ENV" python "$_PARSE_SCRIPT" "$RUN_DIR/compariso
 rm "$_PARSE_SCRIPT"
 
 for COMP in $COMPARISONS; do
-  COMP_INPUT="$RUN_DIR/edger_lrt/$COMP"
+  COMP_INPUT="$RUN_DIR/$EDGER_SUBDIR/$COMP"
   COMP_FIGURES="$RUN_DIR/figures/$COMP"
   mkdir -p "$COMP_FIGURES/volcanos"
 

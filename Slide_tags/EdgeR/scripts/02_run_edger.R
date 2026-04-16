@@ -22,8 +22,12 @@ library(stringr, lib.loc = "/opt/seurat_env/lib/R/library")
 library(vctrs, lib.loc = "/opt/seurat_env/lib/R/library")
 
 # ========= CONTAINER PATHS =========
+edger_model      <- tolower(Sys.getenv("EDGER_MODEL", unset = "lrt"))
+if (!edger_model %in% c("lrt", "qlf")) stop("EDGER_MODEL must be 'lrt' or 'qlf'")
+message("EdgeR model: ", edger_model)
+
 input_dir        <- "/workspace/out/pseudobulk_outputs"
-output_dir       <- "/workspace/out/edger_lrt"
+output_dir       <- "/workspace/out/edger_out"
 comparisons_file <- "/workspace/comparisons.csv"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -106,15 +110,22 @@ for (counts_file in counts_files) {
       # ---- TMM NORMALIZATION ----
       dge <- calcNormFactors(dge)
 
-      dge <- estimateDisp(dge, robust = TRUE)
-      fit <- glmFit(dge)
-      lrt <- glmLRT(fit, coef = 2)  # GroupB (second level) vs GroupA
+      design <- model.matrix(~group)
+      dge    <- estimateDisp(dge, design = design, robust = TRUE)
+
+      if (edger_model == "qlf") {
+        fit    <- glmQLFit(dge, design = design, robust = TRUE)
+        result <- glmQLFTest(fit, coef = 2)
+      } else {
+        fit    <- glmFit(dge, design = design)
+        result <- glmLRT(fit, coef = 2)
+      }
 
       # Save results — one subdirectory per comparison
       comp_dir <- file.path(output_dir, paste0(groupA_name, "_vs_", groupB_name))
       dir.create(comp_dir, showWarnings = FALSE, recursive = TRUE)
       result_file <- file.path(comp_dir, paste0(celltype, "_edgeR_results.tsv"))
-      write.table(topTags(lrt, n = Inf)$table, result_file, sep = "\t", quote = FALSE)
+      write.table(topTags(result, n = Inf)$table, result_file, sep = "\t", quote = FALSE)
     }, error = function(e) {
       cat("  SKIPPING", groupA_name, "vs", groupB_name, "for cell type", celltype,
           "- error:", conditionMessage(e), "\n")
