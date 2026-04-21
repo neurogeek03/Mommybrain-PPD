@@ -14,6 +14,8 @@ parser.add_argument('--merge_celltypes', nargs='+', default=None,
                     help='Cell type labels to merge')
 parser.add_argument('--merge_label',     type=str,  default=None,
                     help='Label for merged cell types (default: joined with "+")')
+parser.add_argument('--adata_path',      type=str,  required=True,
+                    help='Path to input .h5ad file')
 parser.add_argument('--run_dir',         type=str,  required=True,
                     help='Path to the run output directory (e.g. out/runs/my_run)')
 args = parser.parse_args()
@@ -32,7 +34,7 @@ figs_dir.mkdir(exist_ok=True, parents=True)
 sc.settings.figdir = figs_dir
 
 # =================== INPUT ===================
-adata_path = data_dir / 'layers_collapsed_DE_symbols.h5ad'
+adata_path = Path(args.adata_path)
 adata = sc.read_h5ad(adata_path)
 print(f"Loaded: {adata.n_obs} cells x {adata.n_vars} genes")
 

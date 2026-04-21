@@ -48,6 +48,7 @@ if [[ $START_FROM -le 0 ]]; then
     fi
 
     $PYTHON 00_preprocess_adata.py \
+        --adata_path      "$ADATA_PATH" \
         --cort_samples    "${CORT_SAMPLES[@]}" \
         --oil_samples     "${OIL_SAMPLES[@]}" \
         --sample_key      "$SAMPLE_KEY" \
