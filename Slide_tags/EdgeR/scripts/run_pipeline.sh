@@ -12,7 +12,7 @@ WORKSPACE="/scratch/mfafouti/Mommybrain-PPD/Slide_tags/EdgeR"
 SCRIPTS_DIR="$WORKSPACE/scripts"
 APPTAINER_SIF="/scratch/mfafouti/docker/edger.sif"
 SEURAT_ENV="/scratch/mfafouti/miniforge3/envs/seurat_env"
-SC_ENV="sc_env"
+PYTHON="$WORKSPACE/.venv/bin/python"
 
 # ========== PROMPT FOR INPUTS ==========
 echo "=== EdgeR Pipeline Setup ==="
@@ -34,6 +34,11 @@ else
 fi
 
 EDGER_MODEL="${EDGER_MODEL:-lrt}"
+LIB_SIZE_MIN="${LIB_SIZE_MIN:-50000}"
+FILTER_MIN_COUNT="${FILTER_MIN_COUNT:-10}"
+FILTER_MIN_TOTAL_COUNT="${FILTER_MIN_TOTAL_COUNT:-15}"
+FILTER_LARGE_N="${FILTER_LARGE_N:-10}"
+FILTER_MIN_PROP="${FILTER_MIN_PROP:-0.7}"
 EDGER_SUBDIR="edger_${EDGER_MODEL}"
 
 H5AD_FILE=$(realpath "$H5AD_FILE")
@@ -52,7 +57,8 @@ echo ""
 
 # ========== CREATE OUTPUT FOLDERS ==========
 PSEUDOBULK_DIR="$WORKSPACE/out/pseudobulk_outputs"
-RUN_DIR="$WORKSPACE/out/runs/$RUN_NAME"
+OUTPUT_BASE_DIR="${OUTPUT_BASE_DIR:-$WORKSPACE/out/runs}"
+RUN_DIR="$OUTPUT_BASE_DIR/$RUN_NAME"
 
 if [ -d "$RUN_DIR" ]; then
   echo "WARNING: '$RUN_DIR' already exists. Reusing existing folder."
@@ -62,6 +68,16 @@ mkdir -p "$PSEUDOBULK_DIR"
 mkdir -p "$RUN_DIR/$EDGER_SUBDIR"
 mkdir -p "$RUN_DIR/figures"
 cp "$COMPARISONS_CSV" "$RUN_DIR/comparisons.csv"
+
+# Copy config into run folder for reproducibility
+if [ $# -ge 1 ] && [ -f "$1" ]; then
+  cp "$1" "$RUN_DIR/run_config.conf"
+fi
+
+# ========== LOGGING ==========
+LOG_FILE="$RUN_DIR/pipeline_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "Log file: $LOG_FILE"
 
 echo "Pseudobulk dir: $PSEUDOBULK_DIR"
 echo "Run folder:     $RUN_DIR"
@@ -73,7 +89,7 @@ if [ "$EXISTING_COUNTS" -gt 0 ]; then
   echo "[1/5] Skipping pseudobulk — $EXISTING_COUNTS count files already exist in $PSEUDOBULK_DIR"
 else
   echo "[1/5] Pseudobulking from AnnData..."
-  conda run -n "$SC_ENV" python "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" \
+  "$PYTHON" "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" \
     --h5ad "$H5AD_FILE" \
     --output-dir "$PSEUDOBULK_DIR" \
     --celltype-col "$CELLTYPE_COL" \
@@ -85,6 +101,11 @@ echo ""
 echo "[2/5] Running EdgeR (model: $EDGER_MODEL) (Apptainer)..."
 apptainer exec \
   --env EDGER_MODEL="$EDGER_MODEL" \
+  --env LIB_SIZE_MIN="$LIB_SIZE_MIN" \
+  --env FILTER_MIN_COUNT="$FILTER_MIN_COUNT" \
+  --env FILTER_MIN_TOTAL_COUNT="$FILTER_MIN_TOTAL_COUNT" \
+  --env FILTER_LARGE_N="$FILTER_LARGE_N" \
+  --env FILTER_MIN_PROP="$FILTER_MIN_PROP" \
   --bind "$WORKSPACE:/workspace" \
   --bind "$PSEUDOBULK_DIR:/workspace/out/pseudobulk_outputs" \
   --bind "$RUN_DIR/$EDGER_SUBDIR:/workspace/out/edger_out" \
@@ -103,7 +124,7 @@ df = pd.read_csv(sys.argv[1])
 for _, row in df.iterrows():
     print(f"{row['GroupA_name']}_vs_{row['GroupB_name']}")
 PYEOF
-COMPARISONS=$(conda run -n "$SC_ENV" python "$_PARSE_SCRIPT" "$RUN_DIR/comparisons.csv")
+COMPARISONS=$("$PYTHON" "$_PARSE_SCRIPT" "$RUN_DIR/comparisons.csv")
 rm "$_PARSE_SCRIPT"
 
 for COMP in $COMPARISONS; do
@@ -115,19 +136,34 @@ for COMP in $COMPARISONS; do
   echo "--- Comparison: $COMP ---"
 
   echo "[3/5] Interactive volcano plots..."
-  conda run -n "$SC_ENV" python "$SCRIPTS_DIR/03_plot_volcano.py" \
+  "$PYTHON" "$SCRIPTS_DIR/03_plot_volcano.py" \
     --input-dir "$COMP_INPUT" \
     --output-dir "$COMP_FIGURES"
 
   echo "[4/5] Static volcano plots..."
-  conda run -n "$SC_ENV" python "$SCRIPTS_DIR/04_plot_edgeR.py" \
+  "$PYTHON" "$SCRIPTS_DIR/04_plot_edgeR.py" \
     --input-dir "$COMP_INPUT" \
     volcanos --output-dir "$COMP_FIGURES/volcanos"
 
   echo "[5/5] LIANA DEA CSV..."
-  conda run -n "$SC_ENV" python "$SCRIPTS_DIR/05_make_liana_dea_csv.py" \
+  "$PYTHON" "$SCRIPTS_DIR/05_make_liana_dea_csv.py" \
     "$COMP_INPUT"
 
+done
+
+# ========== BARPLOTS: All comparisons ==========
+echo ""
+echo "[+] Summary barplots..."
+BARPLOT_OUT="$RUN_DIR/figures/SummaryBarPlots"
+mkdir -p "$BARPLOT_OUT"
+for COMP_DIR in "$RUN_DIR/$EDGER_SUBDIR"/*/; do
+  COMP=$(basename "$COMP_DIR")
+  echo "  Barplot: $COMP"
+  "$PYTHON" "$SCRIPTS_DIR/04_plot_edgeR.py" \
+    --input-dir "$COMP_DIR" \
+    barplot \
+    --horizontal \
+    --output "$BARPLOT_OUT/${COMP}_barplot.png"
 done
 
 echo ""

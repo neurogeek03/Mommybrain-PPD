@@ -4,7 +4,7 @@
 # Except these file types
 !*.py
 !*.R
-!*.conf
+!**/config/*.conf
 !*.sh
 
 # Allow directories to be traversed

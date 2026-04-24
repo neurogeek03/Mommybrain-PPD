@@ -22,9 +22,19 @@ library(stringr, lib.loc = "/opt/seurat_env/lib/R/library")
 library(vctrs, lib.loc = "/opt/seurat_env/lib/R/library")
 
 # ========= CONTAINER PATHS =========
-edger_model      <- tolower(Sys.getenv("EDGER_MODEL", unset = "lrt"))
+edger_model           <- tolower(Sys.getenv("EDGER_MODEL", unset = "lrt"))
 if (!edger_model %in% c("lrt", "qlf")) stop("EDGER_MODEL must be 'lrt' or 'qlf'")
-message("EdgeR model: ", edger_model)
+
+lib_size_min          <- as.numeric(Sys.getenv("LIB_SIZE_MIN",          unset = "50000"))
+filter_min_count      <- as.numeric(Sys.getenv("FILTER_MIN_COUNT",      unset = "10"))
+filter_min_total      <- as.numeric(Sys.getenv("FILTER_MIN_TOTAL_COUNT", unset = "15"))
+filter_large_n        <- as.numeric(Sys.getenv("FILTER_LARGE_N",        unset = "10"))
+filter_min_prop       <- as.numeric(Sys.getenv("FILTER_MIN_PROP",       unset = "0.7"))
+
+message("EdgeR model:           ", edger_model)
+message("lib.size min:          ", lib_size_min)
+message("filterByExpr min.count:", filter_min_count, " | min.total.count:", filter_min_total,
+        " | large.n:", filter_large_n, " | min.prop:", filter_min_prop)
 
 input_dir        <- "/workspace/out/pseudobulk_outputs"
 output_dir       <- "/workspace/out/edger_out"
@@ -88,7 +98,7 @@ for (counts_file in counts_files) {
       dge <- DGEList(counts = counts_sub, group = group)
 
       # ---- SAMPLE FILTER: drop pseudobulk samples with very low total counts ----
-      keep.samples <- dge$samples$lib.size > 5e4
+      keep.samples <- dge$samples$lib.size > lib_size_min
       if (sum(keep.samples) < ncol(dge)) {
         dropped <- colnames(dge)[!keep.samples]
         cat("  Dropping low-lib-size samples:", paste(dropped, collapse = ", "), "\n")
@@ -103,7 +113,11 @@ for (counts_file in counts_files) {
       }
 
       # ---- GENE FILTER: remove lowly expressed genes on pseudobulk counts ----
-      keep.genes <- filterByExpr(dge, group = group)
+      keep.genes <- filterByExpr(dge, group = group,
+                                  min.count       = filter_min_count,
+                                  min.total.count = filter_min_total,
+                                  large.n         = filter_large_n,
+                                  min.prop        = filter_min_prop)
       cat("  Keeping", sum(keep.genes), "of", nrow(dge), "genes after filterByExpr.\n")
       dge <- dge[keep.genes, , keep.lib.sizes = FALSE]
 
