@@ -23,7 +23,7 @@ heatmap_data = df.pivot_table(
     index='source', columns='target', values='interaction_stat', aggfunc='mean'
 )
 
-plt.figure(figsize=(12, 10))
+plt.figure(figsize=(32, 10))
 sns.heatmap(
     heatmap_data,
     cmap='RdBu_r',

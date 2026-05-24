@@ -8,7 +8,7 @@ import liana as li
 import seaborn as sns
 
 parser = argparse.ArgumentParser(description='Plot cell type pair interactions from lr_res')
-parser.add_argument('--p_val', type=float, default=0.1,
+parser.add_argument('--p_val', type=float, default=0.05,
                     help='interaction_padj threshold for significance filter')
 parser.add_argument('--run_dir', type=str, required=True,
                     help='Path to the run output directory (e.g. out/runs/my_run)')

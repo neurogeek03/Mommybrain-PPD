@@ -12,7 +12,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATA_DIR="$SCRIPT_DIR/viewer_data"
+DATA_DIR="$SCRIPT_DIR/viewer_data_hf"
 PORT=8080
 
 if [ ! -f "$DATA_DIR/manifest.json" ]; then

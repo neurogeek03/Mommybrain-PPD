@@ -180,7 +180,7 @@ print(f"manifest.json written ({len(genes)} genes, {len(celltypes)} cell types)"
 
 # ── Copy viewer.html ───────────────────────────────────────────────────────────
 
-viewer_src = os.path.join(os.path.dirname(__file__), "viewer.html")
+viewer_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "viewer.html")
 viewer_dst = os.path.join(out_dir, "viewer.html")
 shutil.copy(viewer_src, viewer_dst)
 print(f"viewer.html copied to {viewer_dst}")

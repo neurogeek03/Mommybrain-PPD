@@ -40,6 +40,8 @@ FILTER_MIN_TOTAL_COUNT="${FILTER_MIN_TOTAL_COUNT:-15}"
 FILTER_LARGE_N="${FILTER_LARGE_N:-10}"
 FILTER_MIN_PROP="${FILTER_MIN_PROP:-0.7}"
 EDGER_SUBDIR="edger_${EDGER_MODEL}"
+PLOT_LOGFC_THRESH="${PLOT_LOGFC_THRESH:-0.1}"
+PLOT_FDR_THRESH="${PLOT_FDR_THRESH:-0.05}"
 
 H5AD_FILE=$(realpath "$H5AD_FILE")
 if [ ! -f "$H5AD_FILE" ]; then
@@ -143,7 +145,9 @@ for COMP in $COMPARISONS; do
   echo "[4/5] Static volcano plots..."
   "$PYTHON" "$SCRIPTS_DIR/04_plot_edgeR.py" \
     --input-dir "$COMP_INPUT" \
-    volcanos --output-dir "$COMP_FIGURES/volcanos"
+    volcanos --output-dir "$COMP_FIGURES/volcanos" \
+    --logfc-thresh "$PLOT_LOGFC_THRESH" \
+    --fdr-thresh "$PLOT_FDR_THRESH"
 
   echo "[5/5] LIANA DEA CSV..."
   "$PYTHON" "$SCRIPTS_DIR/05_make_liana_dea_csv.py" \
@@ -163,6 +167,8 @@ for COMP_DIR in "$RUN_DIR/$EDGER_SUBDIR"/*/; do
     --input-dir "$COMP_DIR" \
     barplot \
     --horizontal \
+    --logfc-thresh "$PLOT_LOGFC_THRESH" \
+    --fdr-thresh "$PLOT_FDR_THRESH" \
     --output "$BARPLOT_OUT/${COMP}_barplot.png"
 done
 
