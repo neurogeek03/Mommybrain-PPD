@@ -43,7 +43,7 @@ def load_subclass_colors(color_csv=None, subclasses=None):
 
 def draw_dotplot_panel(ax, gene_order, subclasses, mean_piv, pct_capped,
                        vmin, vmax, subclass_colours,
-                       expr_cmap='Purples', dot_scale=200, bar_height=0.8):
+                       expr_cmap='Purples', dot_scale=200, bar_height=1.5):
     """
     Draw one dotplot panel onto ax.
     Returns the scatter object (needed for the shared colorbar).
@@ -72,10 +72,6 @@ def draw_dotplot_panel(ax, gene_order, subclasses, mean_piv, pct_capped,
     ax.set_xlim(-0.5, len(subclasses) - 0.5)
     ax.set_ylim(bar_y + bar_height + 0.2, -0.5)
 
-    for gi in range(n_genes):
-        ax.axhline(gi, color='#f0f0f0', linewidth=0.3, zorder=0)
-    for si in range(len(subclasses) - 1):
-        ax.axvline(si + 0.5, color='#d0d0d0', linewidth=0.4, zorder=0)
 
     return sc
 
@@ -89,4 +85,4 @@ def add_size_legend(ax, dot_scale, dot_max, legend_pcts=None, bbox=(1.12, 0.85))
         for p in legend_pcts if p <= dot_max
     ]
     ax.legend(handles=handles, title='% expressing', loc='upper left',
-              bbox_to_anchor=bbox, frameon=False, fontsize=8, title_fontsize=9)
+              bbox_to_anchor=bbox, frameon=False, fontsize=8, title_fontsize=10)

@@ -42,6 +42,12 @@ FILTER_MIN_PROP="${FILTER_MIN_PROP:-0.7}"
 EDGER_SUBDIR="edger_${EDGER_MODEL}"
 PLOT_LOGFC_THRESH="${PLOT_LOGFC_THRESH:-0.1}"
 PLOT_FDR_THRESH="${PLOT_FDR_THRESH:-0.05}"
+# RCTD quality filters (optional — only applied when set in config)
+SCORE_COL="${SCORE_COL:-}"
+SPOT_CLASS_COL="${SPOT_CLASS_COL:-}"
+NEURON_SCORE_THRESH="${NEURON_SCORE_THRESH:-}"
+NON_NEURON_SCORE_THRESH="${NON_NEURON_SCORE_THRESH:-}"
+SINGLET_ONLY_NON_NEURONS="${SINGLET_ONLY_NON_NEURONS:-false}"
 
 H5AD_FILE=$(realpath "$H5AD_FILE")
 if [ ! -f "$H5AD_FILE" ]; then
@@ -58,7 +64,7 @@ fi
 echo ""
 
 # ========== CREATE OUTPUT FOLDERS ==========
-PSEUDOBULK_DIR="$WORKSPACE/out/pseudobulk_outputs"
+PSEUDOBULK_DIR="${PSEUDOBULK_DIR:-$WORKSPACE/out/pseudobulk_outputs}"
 OUTPUT_BASE_DIR="${OUTPUT_BASE_DIR:-$WORKSPACE/out/runs}"
 RUN_DIR="$OUTPUT_BASE_DIR/$RUN_NAME"
 
@@ -91,11 +97,18 @@ if [ "$EXISTING_COUNTS" -gt 0 ]; then
   echo "[1/5] Skipping pseudobulk — $EXISTING_COUNTS count files already exist in $PSEUDOBULK_DIR"
 else
   echo "[1/5] Pseudobulking from AnnData..."
-  "$PYTHON" "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" \
-    --h5ad "$H5AD_FILE" \
-    --output-dir "$PSEUDOBULK_DIR" \
-    --celltype-col "$CELLTYPE_COL" \
+  PSEUDOBULK_ARGS=(
+    --h5ad "$H5AD_FILE"
+    --output-dir "$PSEUDOBULK_DIR"
+    --celltype-col "$CELLTYPE_COL"
     --gene-symbol-col "$GENE_SYMBOL_COL"
+  )
+  [ -n "$SCORE_COL" ]              && PSEUDOBULK_ARGS+=(--score-col "$SCORE_COL")
+  [ -n "$SPOT_CLASS_COL" ]         && PSEUDOBULK_ARGS+=(--spot-class-col "$SPOT_CLASS_COL")
+  [ -n "$NEURON_SCORE_THRESH" ]    && PSEUDOBULK_ARGS+=(--neuron-score-thresh "$NEURON_SCORE_THRESH")
+  [ -n "$NON_NEURON_SCORE_THRESH" ] && PSEUDOBULK_ARGS+=(--non-neuron-score-thresh "$NON_NEURON_SCORE_THRESH")
+  [ "$SINGLET_ONLY_NON_NEURONS" = "true" ] && PSEUDOBULK_ARGS+=(--singlet-only-non-neurons)
+  "$PYTHON" "$SCRIPTS_DIR/01_pseudobulk_from_anndata.py" "${PSEUDOBULK_ARGS[@]}"
 fi
 
 # ========== STEP 2: EdgeR LRT (Apptainer) ==========
@@ -109,10 +122,10 @@ apptainer exec \
   --env FILTER_LARGE_N="$FILTER_LARGE_N" \
   --env FILTER_MIN_PROP="$FILTER_MIN_PROP" \
   --bind "$WORKSPACE:/workspace" \
+  --bind "$SCRIPTS_DIR:/workspace/scripts" \
   --bind "$PSEUDOBULK_DIR:/workspace/out/pseudobulk_outputs" \
   --bind "$RUN_DIR/$EDGER_SUBDIR:/workspace/out/edger_out" \
   --bind "$RUN_DIR/comparisons.csv:/workspace/comparisons.csv" \
-  --bind "$WORKSPACE/rostral_caudal.csv:/workspace/rostral_caudal.csv" \
   --bind "$SEURAT_ENV:/opt/seurat_env" \
   "$APPTAINER_SIF" \
   Rscript /workspace/scripts/02_run_edger.R

@@ -32,8 +32,8 @@ print(f"------ 02_plot_markers started at {stamp} ------")
 # =================== CONFIG ===================
 CSV_PATH  = PROJECT / 'out' / 'marker_dotplot_data.csv'
 COLOR_CSV = Path('/scratch/mfafouti/CAN-2026-poster/data/cluster_annotation_term.csv')
-FIG_WIDTH   = 12
-FIG_HEIGHT  = 14
+FIG_WIDTH   = 14
+FIG_HEIGHT  = 7
 EXPR_CMAP   = 'Purples'
 DOT_MAX     = 0.8
 DOT_SCALE   = 200
@@ -115,12 +115,12 @@ for panel_idx, bc in enumerate(BROAD_CLASS_ORDER):
         sc_for_cbar = sc
 
     ax.set_xticks(range(len(subs)))
-    ax.set_xticklabels(subs, rotation=90, ha='center', fontsize=7)
-    ax.set_title(bc, fontsize=11, fontweight='bold', pad=8)
+    ax.set_xticklabels(subs, rotation=45, ha='right', fontsize=13)
+    ax.set_title(bc, fontsize=13, fontweight='bold', pad=8)
 
     if panel_idx == 0:
         ax.set_yticks(range(n_genes))
-        ax.set_yticklabels(gene_order, fontsize=7)
+        ax.set_yticklabels(gene_order, fontsize=13)
     else:
         ax.tick_params(left=False)
 
@@ -130,15 +130,15 @@ cbar = fig.colorbar(
 )
 cbar.set_label(
     'Mean expression\n(scaled per gene)' if STD_SCALE else 'Mean expression',
-    fontsize=9,
+    fontsize=10,
 )
 
 add_size_legend(axes[-1], DOT_SCALE, DOT_MAX)
-fig.suptitle('Marker gene dotplot', fontsize=13, fontweight='bold', y=0.98)
+fig.suptitle('Marker gene dotplot', fontsize=16, fontweight='bold', y=0.98)
 
 # =================== SAVE ===================
-pdf_path = OUT_DIR / f'marker_dotplot_{stamp}.pdf'
-png_path = OUT_DIR / f'marker_dotplot_{stamp}.png'
+pdf_path = OUT_DIR / 'marker_dotplot.pdf'
+png_path = OUT_DIR / 'marker_dotplot.png'
 fig.savefig(pdf_path, bbox_inches='tight')
 fig.savefig(png_path, dpi=300, bbox_inches='tight')
 print(f"Saved {pdf_path.name}  and  {png_path.name}")

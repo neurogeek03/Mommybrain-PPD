@@ -26,8 +26,8 @@ project_path = Path(__file__).resolve().parents[1]
 CSV_PATH   = project_path / 'out' / 'marker_dotplot_data.csv'
 COLOR_CSV  = Path('/scratch/mfafouti/Mommybrain/cluster_annotation_term.csv')
 
-FIG_WIDTH   = 10
-FIG_HEIGHT  = 14
+FIG_WIDTH   = 14
+FIG_HEIGHT  = 7
 EXPR_CMAP   = 'Purples'
 DOT_MAX     = 0.8        # cap pct_expr for dot sizing (fraction)
 DOT_SCALE   = 200        # base size multiplier for dots
@@ -139,7 +139,7 @@ fig, axes = plt.subplots(
 vmin = mean_piv.values[~np.isnan(mean_piv.values)].min()
 vmax = mean_piv.values[~np.isnan(mean_piv.values)].max()
 
-BAR_HEIGHT = 0.8  # height of the colour bar rectangles
+BAR_HEIGHT = 1.5  # height of the colour bar rectangles
 bar_y = n_genes + 0.5  # y position for colour bar (below gene grid, since y is inverted)
 
 sc_for_cbar = None  # will store one scatter for the colourbar
@@ -177,25 +177,22 @@ for panel_idx, bc in enumerate(BROAD_CLASS_ORDER):
     ax.set_ylim(bar_y + BAR_HEIGHT + 0.2, -0.5)  # inverted y; extend to show bar
 
     ax.set_xticks(range(n_subs))
-    ax.set_xticklabels(subs, rotation=90, ha='center', fontsize=7)
+    ax.set_xticklabels(subs, rotation=45, ha='right', fontsize=13)
 
     if panel_idx == 0:
         ax.set_yticks(range(n_genes))
-        ax.set_yticklabels(gene_order, fontsize=7)
+        ax.set_yticklabels(gene_order, fontsize=13)
     else:
         ax.tick_params(left=False)
 
-    ax.set_title(bc, fontsize=11, fontweight='bold', pad=8)
+    ax.set_title(bc, fontsize=13, fontweight='bold', pad=8)
 
-    # Light grid lines for readability
-    for gi in range(n_genes):
-        ax.axhline(gi, color='#f0f0f0', linewidth=0.3, zorder=0)
 
 # --- Colourbar (mean expression) ---
 cbar = fig.colorbar(sc_for_cbar, ax=axes.tolist(), shrink=0.25, pad=0.02,
                     aspect=15, location='right')
 cbar.set_label('Mean expression\n(scaled per gene)' if STD_SCALE else 'Mean expression',
-               fontsize=9)
+               fontsize=8)
 
 # --- Size legend (pct expressing) ---
 legend_pcts = [0.2, 0.4, 0.6, 0.8]
@@ -206,14 +203,14 @@ legend_handles = [
 ]
 axes[-1].legend(handles=legend_handles, title='% expressing', loc='upper left',
                 bbox_to_anchor=(1.12, 0.85), frameon=False, fontsize=8,
-                title_fontsize=9)
+                title_fontsize=8)
 
-fig.suptitle('Marker gene dotplot', fontsize=13, fontweight='bold', y=0.98)
+fig.suptitle('Marker gene dotplot', fontsize=16, fontweight='bold', y=0.98)
 
 # =================== SAVE ===================
 
-pdf_path = output_base / f"marker_dotplot_{stamp}.pdf"
-png_path = output_base / f"marker_dotplot_{stamp}.png"
+pdf_path = output_base / "marker_dotplot.pdf"
+png_path = output_base / "marker_dotplot.png"
 fig.savefig(pdf_path, bbox_inches='tight')
 fig.savefig(png_path, dpi=300, bbox_inches='tight')
 print(f"Saved {pdf_path.name} and {png_path.name}")

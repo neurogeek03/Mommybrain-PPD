@@ -30,13 +30,27 @@ parser.add_argument("--celltype-col", type=str, default="subclass_name",
                     help="obs column to use as cell type label (default: subclass_name).")
 parser.add_argument("--gene-symbol-col", type=str, default="gene_symbols",
                     help="var column containing gene symbols (default: gene_symbols).")
+parser.add_argument("--score-col", type=str, default=None,
+                    help="obs column containing RCTD singlet score (optional).")
+parser.add_argument("--spot-class-col", type=str, default=None,
+                    help="obs column containing RCTD spot class (optional).")
+parser.add_argument("--neuron-score-thresh", type=float, default=None,
+                    help="Min singlet score for neurons (Glut/Gaba/IMN cell types). Requires --score-col.")
+parser.add_argument("--non-neuron-score-thresh", type=float, default=None,
+                    help="Min singlet score for non-neurons (NN cell types). Requires --score-col.")
+parser.add_argument("--singlet-only-non-neurons", action="store_true",
+                    help="Keep only spot_class==singlet for non-neurons. Requires --spot-class-col.")
 args = parser.parse_args()
 
 ad_file = args.h5ad
 out_dir = args.output_dir
 celltype_col = args.celltype_col
 gene_symbol_col = args.gene_symbol_col
-pct_mt_counts = 3
+score_col = args.score_col
+spot_class_col = args.spot_class_col
+neuron_score_thresh = args.neuron_score_thresh
+non_neuron_score_thresh = args.non_neuron_score_thresh
+singlet_only_non_neurons = args.singlet_only_non_neurons
 
 out_dir.mkdir(exist_ok=True, parents=True)
 
@@ -50,6 +64,36 @@ adata.X = adata.raw.X.copy()
 # # ========== Removing more cells with mt counts ==========
 # adata = adata[adata.obs['pct_counts_mt'] < pct_mt_counts].copy()
 # print(f'adata object is now subset to {adata.n_obs}')
+
+# ========== RCTD QUALITY FILTERS (optional) ==========
+# Non-neurons: cell types ending in _NN; everything else is neuron
+if neuron_score_thresh is not None or non_neuron_score_thresh is not None or singlet_only_non_neurons:
+    ct = adata.obs[celltype_col].astype(str)
+    is_non_neuron = ct.str.endswith('_NN')
+    is_neuron = ~is_non_neuron
+
+    keep = pd.Series(True, index=adata.obs_names)
+
+    if neuron_score_thresh is not None:
+        if score_col is None:
+            raise ValueError("--score-col is required when --neuron-score-thresh is set")
+        keep &= ~is_neuron | (adata.obs[score_col] >= neuron_score_thresh)
+        print(f"Neuron score filter (>= {neuron_score_thresh}): {keep[is_neuron].sum()} / {is_neuron.sum()} neurons kept")
+
+    if non_neuron_score_thresh is not None:
+        if score_col is None:
+            raise ValueError("--score-col is required when --non-neuron-score-thresh is set")
+        keep &= ~is_non_neuron | (adata.obs[score_col] >= non_neuron_score_thresh)
+        print(f"Non-neuron score filter (>= {non_neuron_score_thresh}): {keep[is_non_neuron].sum()} / {is_non_neuron.sum()} non-neurons kept")
+
+    if singlet_only_non_neurons:
+        if spot_class_col is None:
+            raise ValueError("--spot-class-col is required when --singlet-only-non-neurons is set")
+        keep &= ~is_non_neuron | (adata.obs[spot_class_col] == "singlet")
+        print(f"Non-neuron singlet filter: {keep[is_non_neuron].sum()} / {is_non_neuron.sum()} non-neurons kept")
+
+    adata = adata[keep].copy()
+    print(f"After RCTD filters: {adata.n_obs} cells remaining")
 
 # ========== COLLAPSE ADATA OBJ BY GENE SYMBOL ==========
 collapsed_adata = collapse_by_gene_symbol(adata, gene_symbol_col=gene_symbol_col, aggfunc="sum")
